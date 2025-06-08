@@ -3,8 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 
 export default function AuthLayout() {
   return <>
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }}/>
     </Stack>
-    <StatusBar style="inverted"/>
+    <StatusBar style="light" />
   </>
 }
