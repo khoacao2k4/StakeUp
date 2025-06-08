@@ -16,7 +16,6 @@ export default function Signup() {
     try {
       await createUserWithEmailAndPassword(auth, email, password)
     } catch (error: any) {
-      console.log(error)
       alert('Sign up failed: ' + error.message);
     } finally {
       setLoading(false);
