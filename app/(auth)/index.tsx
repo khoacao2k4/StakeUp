@@ -1,16 +1,16 @@
 import ImageViewer from '@/components/ImageViewer';
 import { Link } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const placeHolderImage = require('../../assets/images/onboard_img.gif');
 
 export default function Onboarding() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerWrapper}>
         <Text style={styles.title}>
-          💰 Betmate 💰
+          Betmate 💰
         </Text>
       </View>
       <View style={styles.imageWrapper}>
@@ -27,7 +27,7 @@ export default function Onboarding() {
           <Text style={styles.loginText}>Already have an account?</Text>
         </Link>
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -37,8 +37,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 100, // Pushes content down, not flush to top
-    paddingBottom: 60, // Keeps buttons off the very bottom
     paddingHorizontal: 24,
   },
   headerWrapper: {
@@ -57,7 +55,8 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     flex: 1,
     width: '100%',
-    alignItems: 'center'
+    alignItems: 'center',
+    //backgroundColor: "#00FF00"
   },
   title: {
     fontSize: 48,
@@ -78,10 +77,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 20,
   },
   loginText: {
     color: '#2ecc71',
-    fontSize: 15,
+    fontSize: 16,
   },
 })
