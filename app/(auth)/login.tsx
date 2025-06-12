@@ -1,28 +1,23 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth } from '../../firebaseConfig'; // Make sure this path is correct
-
+import { supabase } from '../../lib/supabase';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
+  async function signInWithEmail() {
     setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // On success, you would navigate to the main part of the app
-      // e.g., router.replace('/home');
-    } catch (error: any) {
-      alert('Login failed: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    })
+    if (error) Alert.alert(error.message);
+    setLoading(false);
+  }
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -69,7 +64,7 @@ export default function Login() {
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={handleLogin} style={styles.button} activeOpacity={0.5}>
+                <TouchableOpacity onPress={signInWithEmail} style={styles.button} activeOpacity={0.5}>
                   <Text style={styles.buttonText}>Login</Text>
                 </TouchableOpacity>
 

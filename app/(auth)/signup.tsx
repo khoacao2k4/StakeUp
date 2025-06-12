@@ -1,25 +1,21 @@
 import { Feather } from '@expo/vector-icons'; // Make sure to install @expo/vector-icons
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
-import { ActivityIndicator, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { auth } from '../../firebaseConfig';
+import { supabase } from "../../lib/supabase";
 
 export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSignUp = async () => {
-    setLoading(true)
-    try {
-      await createUserWithEmailAndPassword(auth, email, password)
-    } catch (error: any) {
-      alert('Sign up failed: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
+  const signUpWithEmail = async () => {
+    setLoading(true);
+    const { data: { session }, error, } = await supabase.auth.signUp({ email: email, password: password,})
+    if (error) Alert.alert(error.message)
+    if (!session) Alert.alert('Please check your inbox for email verification!')
+    setLoading(false)
   }
 
   return (
@@ -67,7 +63,7 @@ export default function Signup() {
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={handleSignUp} style={styles.button} activeOpacity={0.5}>
+                <TouchableOpacity onPress={signUpWithEmail} style={styles.button} activeOpacity={0.5}>
                   <Text style={styles.buttonText}>Sign Up</Text>
                 </TouchableOpacity>
 

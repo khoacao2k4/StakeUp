@@ -1,36 +1,44 @@
 import { router, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { getAuth } from "firebase/auth";
 import { useEffect, useState } from "react";
+import { Session } from '@supabase/supabase-js'
+import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [user, setUser] = useState(null);
+  const [session, setSession] = useState<Session | null>(null)
   const [init, setInit] = useState(true);
   const segments = useSegments();
-  const onAuthStateChanged = (user) => { 
-    console.log('onAuthStateChanged', user);
-    setUser(user);
-    if (init) setInit(false);
-  };
 
   useEffect(() => {
-    const subscriber = getAuth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('getsession', session)
+      setSession(session);
+      if (init) setInit(false);
+    })
+    supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('onAuthStateChange', session);
+      setSession(session);
+      if (init) setInit(false);
+    })
   }, [])
 
   useEffect(() => {
     if (init) return;
     const accessApp = segments[0] === '(app)';
-    if (user && !accessApp) { // user is signed in and wants to access app
+    if (session && !accessApp) { // user is signed in and wants to access app
       router.replace('/(app)/home');
-    } else if (!user && accessApp) { // user is not signed in and wants to access app
+    } else if (!session && accessApp) { // user is not signed in and wants to access app
       router.replace('/');
     } 
+    // Delay hiding splash by a short amount to ensure routing is complete
+    const t = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 250);
 
-    SplashScreen.hideAsync();
-  }, [user, init]);
+    return () => clearTimeout(t);
+  }, [session, init]);
 
   if (init) return null;
   
