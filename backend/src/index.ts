@@ -1,12 +1,29 @@
-import express, { Request, Response} from 'express';
+import express from 'express'
+import dotenv from 'dotenv'
+import userRoutes from './routes/user'
+import { errorHandler } from './middleware/errorHandler'
 
-const app = express();
-const port = 3000;
+dotenv.config()
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, TypeScript with Express!');
-});
+const app = express()
+const port = process.env.PORT || 3000
+
+// Middlewares
+app.use(express.json())
+app.use(errorHandler)
+
+// Routes
+app.use('/user', userRoutes)
+
+app.get('/', (_req, res) => {
+  res.send('Welcome to the Betmate backend 🎲💰')
+})
+
+// 404 handler
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Not found' })
+})
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+  console.log(`Server is running at http://localhost:${port}`)
+})
