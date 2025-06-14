@@ -1,11 +1,5 @@
-import { Stack } from "expo-router";
-import { StatusBar } from 'expo-status-bar';
+import { Slot } from 'expo-router';
 
-export default function AuthLayout() {
-  return <>
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }}/>
-    </Stack>
-    <StatusBar style="light" />
-  </>
+export default function AppLayout() {
+  return <Slot />;
 }

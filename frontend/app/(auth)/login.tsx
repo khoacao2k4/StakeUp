@@ -68,7 +68,7 @@ export default function Login() {
                   <Text style={styles.buttonText}>Login</Text>
                 </TouchableOpacity>
 
-                <Pressable onPress={() => router.push('/(auth)/signup')}>
+                <Pressable onPress={() => router.replace('/(auth)/signup')}>
                     <Text style={styles.linkText}>
                         Don't have an account? <Text style={styles.link}>Sign Up</Text>
                     </Text>

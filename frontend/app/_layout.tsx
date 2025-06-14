@@ -1,4 +1,4 @@
-import { router, Stack, useSegments } from "expo-router";
+import { router, Slot, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { Session } from '@supabase/supabase-js'
@@ -29,8 +29,8 @@ export default function RootLayout() {
     const accessApp = segments[0] === '(app)';
     if (session && !accessApp) { // user is signed in and wants to access app
       router.replace('/(app)/home');
-    } else if (!session && accessApp) { // user is not signed in and wants to access app
-      router.replace('/');
+    } else if (!session) {
+      router.replace('/(auth)/onboarding');
     } 
     // Delay hiding splash by a short amount to ensure routing is complete
     const t = setTimeout(() => {
@@ -42,7 +42,5 @@ export default function RootLayout() {
 
   if (init) return null;
   
-  return <Stack screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="(auth)" options={{ headerShown: false }}/>
-  </Stack>;
+  return <Slot />
 }
