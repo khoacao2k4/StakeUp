@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
+export default function CreateScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Home Feed</Text>
+        <Text style={styles.headerTitle}>Create a New Bet</Text>
       </View>
       <View style={styles.content}>
-        <Text style={styles.placeholderText}>Active bets will appear here soon!</Text>
+        <Text style={styles.placeholderText}>The bet creation form will be here.</Text>
       </View>
     </SafeAreaView>
   );
