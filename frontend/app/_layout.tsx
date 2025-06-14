@@ -13,12 +13,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('getsession', session)
       setSession(session);
       if (init) setInit(false);
     })
     supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('onAuthStateChange', session);
       setSession(session);
       if (init) setInit(false);
     })
@@ -42,5 +40,5 @@ export default function RootLayout() {
 
   if (init) return null;
   
-  return <Slot />
+  return <Stack screenOptions={{ headerShown: false }} />
 }

@@ -17,7 +17,7 @@ router.get('/me', verifyToken, async (req, res) => {
 
   if (error) res.status(500).json({ error: error.message })
 
-  res.json(data)
+  res.json(data);
 })
 
 

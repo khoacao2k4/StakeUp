@@ -3,9 +3,25 @@ import { router } from "expo-router";
 import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import { Image } from 'expo-image';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../../lib/supabase"; // Make sure this path is correct
+import { getToken, supabase } from "../../lib/supabase"; // Make sure this path is correct
+import { useEffect, useState } from "react";
+import { getProfile } from "@/lib/api";
+
+interface Profile {
+  username: string;
+  website: string;
+  avatar_url: string;
+}
 
 export default function ProfileScreen() {
+  const [profile, setProfile] = useState<Profile | null>(null)
+
+  useEffect(() => {
+    getProfile()
+      .then(data => setProfile(data))
+      .catch(err => console.error('Failed to load profile', err));
+  }, [])
+
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -14,13 +30,7 @@ export default function ProfileScreen() {
     // The router should automatically redirect to the login page if the session is null.
   };
 
-  const StatBox = ({
-    value,
-    label,
-  }: {
-    value: string | number;
-    label: string;
-  }) => (
+  const StatBox = ({ value, label, }: { value: string | number; label: string; }) => (
     <View style={styles.statBox}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -46,15 +56,14 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
-        </View>
-
         <View style={styles.profileSection}>
-          <Image source="https://placehold.co/200x200/ECFDF5/064E3B?text=User" style={styles.avatar} />
-          <Text style={styles.name}>Ethan Carter</Text>
-          <Text style={styles.handle}>@ethan_carter</Text>
+          <Image source={profile?.avatar_url || "https://placehold.co/200x200/ECFDF5/064E3B?text=User"} style={styles.avatar} />
+          <Text style={styles.name}>{profile?.username || 'Anonymous User'}</Text>
+          <Text style={styles.handle}>@{profile?.username || 'anonymous'}</Text>
           <TouchableOpacity style={styles.editButton}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
