@@ -9,13 +9,43 @@ export default function Signup() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  // State to hold validation errors
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  // Validation Logic
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required.';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required.';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters long.';
+    }
+
+    setErrors(newErrors);
+    // Return true if there are no errors
+    return Object.keys(newErrors).length === 0;
+  };
+
 
   const signUpWithEmail = async () => {
-    setLoading(true);
-    const { data: { session }, error, } = await supabase.auth.signUp({ email: email, password: password,})
-    if (error) Alert.alert(error.message)
-    if (!session) Alert.alert('Please check your inbox for email verification!')
-    setLoading(false)
+    Keyboard.dismiss();
+    // Validate the form before trying to sign up
+    if (validateForm()) {
+      setLoading(true);
+      const { data: { session }, error, } = await supabase.auth.signUp({ email: email, password: password, })
+      if (error) Alert.alert(error.message)
+      if (!session) Alert.alert('Please check your inbox for email verification!')
+      setLoading(false)
+    }
   }
 
   return (
@@ -32,7 +62,7 @@ export default function Signup() {
           <Text style={styles.subtitle}>Join the fun and start making friendly wagers.</Text>
 
           {/* Email Input */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, errors.email ? styles.inputError : null]}>
             <Feather name="mail" size={20} color="#047857" style={styles.icon} />
             <TextInput
               placeholder="Email"
@@ -44,9 +74,11 @@ export default function Signup() {
               placeholderTextColor="#047857"
             />
           </View>
+          {/* Display Email Error Message */}
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           {/* Password Input */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, errors.password ? styles.inputError : null]}>
             <Feather name="lock" size={20} color="#047857" style={styles.icon} />
             <TextInput
               placeholder="Password"
@@ -57,20 +89,22 @@ export default function Signup() {
               placeholderTextColor="#047857"
             />
           </View>
+          {/* Display Password Error Message */}
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
           <View style={styles.footer}>
             {loading ? (
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={signUpWithEmail} style={styles.button} activeOpacity={0.5}>
+                <TouchableOpacity onPress={signUpWithEmail} style={styles.button} activeOpacity={0.8}>
                   <Text style={styles.buttonText}>Sign Up</Text>
                 </TouchableOpacity>
 
                 <Pressable onPress={() => router.push('/(auth)/login')}>
-                    <Text style={styles.loginText}>
-                        Already have an account? <Text style={styles.loginLink}>Login</Text>
-                    </Text>
+                  <Text style={styles.loginText}>
+                    Already have an account? <Text style={styles.loginLink}>Login</Text>
+                  </Text>
                 </Pressable>
               </>
             )}
@@ -101,7 +135,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#064E3B', 
+    color: '#064E3B',
     marginBottom: 8,
   },
   subtitle: {
@@ -112,12 +146,16 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5', 
+    backgroundColor: '#ECFDF5',
     borderRadius: 12,
-    marginBottom: 16,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#D1FAE5',
+    marginBottom: 16, // Reduced margin to make space for error text
+  },
+  inputError: {
+    borderColor: '#EF4444', // Red border for error
+    backgroundColor: '#FEF2F2',
   },
   icon: {
     marginRight: 10,
@@ -127,6 +165,12 @@ const styles = StyleSheet.create({
     height: 56,
     fontSize: 16,
     color: '#064E3B',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginLeft: 10,
   },
   footer: {
     flex: 1,
@@ -139,7 +183,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 24,
-    // A subtle shadow for depth
     shadowColor: "#059669",
     shadowOffset: {
       width: 0,
@@ -163,4 +206,4 @@ const styles = StyleSheet.create({
     color: '#10B981',
     fontWeight: 'bold',
   },
-})
+});

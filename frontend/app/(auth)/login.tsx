@@ -3,20 +3,44 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Keyboard, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase'; // Assuming this is your Supabase client
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  // State to hold validation errors
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+
+  // Validtion logic
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!email) {
+      newErrors.email = 'Email is required.';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   async function signInWithEmail() {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    })
-    if (error) Alert.alert(error.message);
-    setLoading(false);
+    // Only proceed if the form is valid
+    if (validateForm()) {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+      if (error) {
+        // You could also set a general form error state here
+        Alert.alert('Login Failed', error.message);
+      }
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,7 +57,7 @@ export default function Login() {
           <Text style={styles.subtitle}>Let's see what bets are waiting for you.</Text>
 
           {/* Email Input */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, errors.email ? styles.inputError : null]}>
             <Feather name="mail" size={20} color="#047857" style={styles.icon} />
             <TextInput
               placeholder="Email"
@@ -45,9 +69,10 @@ export default function Login() {
               placeholderTextColor="#047857"
             />
           </View>
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           {/* Password Input */}
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, errors.password ? styles.inputError : null]}>
             <Feather name="lock" size={20} color="#047857" style={styles.icon} />
             <TextInput
               placeholder="Password"
@@ -58,13 +83,14 @@ export default function Login() {
               placeholderTextColor="#047857"
             />
           </View>
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
           <View style={styles.footer}>
             {loading ? (
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={signInWithEmail} style={styles.button} activeOpacity={0.5}>
+                <TouchableOpacity onPress={signInWithEmail} style={styles.button} activeOpacity={0.8}>
                   <Text style={styles.buttonText}>Login</Text>
                 </TouchableOpacity>
 
@@ -85,7 +111,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FDF4', // Very light, minty green background
+    backgroundColor: '#F0FDF4',
   },
   header: {
     paddingHorizontal: 20,
@@ -115,10 +141,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
     borderRadius: 12,
-    marginBottom: 16,
     paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#D1FAE5',
+    marginBottom: 16
+  },
+  inputError: {
+    borderColor: '#EF4444', // Red border for error
+    backgroundColor: '#FEF2F2',
   },
   icon: {
     marginRight: 10,
@@ -128,6 +158,12 @@ const styles = StyleSheet.create({
     height: 56,
     fontSize: 16,
     color: '#064E3B',
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginLeft: 10,
   },
   footer: {
     flex: 1,
