@@ -5,8 +5,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../lib/supabase"; // Make sure this path is correct
 import { useEffect, useState } from "react";
 import { getProfile } from "@/lib/api";
+import { useProfileStore } from "@/stores/useProfileStore";
+import { router } from "expo-router";
 
-interface Profile {
+export interface Profile {
   username?: string;
   full_name?: string;
   website?: string;
@@ -14,8 +16,9 @@ interface Profile {
 }
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { profile, setProfile } = useProfileStore();
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Fetch the user's profile
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function ProfileScreen() {
           )}
           <Text style={styles.profileName}>{loading ? "" : profile?.full_name}</Text>
           <Text style={styles.profileHandle}>{loading ? "" : `@${profile?.username}`}</Text>
-          <TouchableOpacity style={styles.editButton} disabled={loading}>
+          <TouchableOpacity style={styles.editButton} onPress={() => router.push("/edit-profile")} disabled={loading}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
         </View>

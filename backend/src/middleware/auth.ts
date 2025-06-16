@@ -15,6 +15,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
   if (!token) {
     return next(createError(401, 'Unauthorized'));
   }
+  console.log(token);
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
