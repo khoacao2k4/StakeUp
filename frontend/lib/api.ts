@@ -1,6 +1,5 @@
 import { getToken } from "./supabase";
 import axios from "axios";
-import { Profile } from "@/app/(app)/profile";
 
 const API_BASE_URL =
   "";

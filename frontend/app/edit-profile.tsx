@@ -1,11 +1,22 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView} from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { updateProfile } from "@/lib/api";
 import { router } from "expo-router";
 import { useProfileStore } from "@/stores/useProfileStore";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useAvatarUrl } from "@/hooks/useAvatarUrl";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,7 +31,7 @@ export default function EditProfileScreen() {
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsMultipleSelection: false,
       allowsEditing: true,
       aspect: [1, 1],
@@ -38,7 +49,8 @@ export default function EditProfileScreen() {
       formData.append("full_name", fullName);
       formData.append("username", userName);
 
-      if (avatar) { // If an avatar is selected (not old one)
+      if (avatar) {
+        // If an avatar is selected (not old one)
         formData.append("avatar", {
           uri: avatar.uri,
           name: `avatar.jpg`,
@@ -47,129 +59,182 @@ export default function EditProfileScreen() {
       }
       const updatedProfile = await updateProfile(formData);
       // Remove old avatar
-      if (updatedProfile.avatar_path && updatedProfile.avatar_path !== profile?.avatar_path) {
+      if (
+        updatedProfile.avatar_path &&
+        updatedProfile.avatar_path !== profile?.avatar_path
+      ) {
         await AsyncStorage.removeItem(`avatar-${profile?.avatar_path}`);
       }
       setProfile(updatedProfile);
-      router.back();
+      Alert.alert("Success", "Your profile has been updated!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
     } catch (err: any) {
       Alert.alert("Update failed", err.message);
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-      </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <Feather name="chevron-left" size={26} color="#064E3B" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <TouchableOpacity onPress={handlePickImage} style={styles.photoUploadWrapper}>
-          {avatar?.uri || avatarUrl ? (
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.avatarSection}>
             <Image
-              source={avatar?.uri || avatarUrl}
-              style={{ width: 100, height: 100, borderRadius: 50 }}
+              source={{
+                uri:
+                  avatar?.uri ||
+                  avatarUrl ||
+                  "https://placehold.co/200x200/ECFDF5/064E3B?text=User",
+              }}
+              style={styles.avatar}
             />
-          ) : (
-            <Feather name="camera" size={32} color="#6B7280" />
-          )}
-          <Text style={styles.photoUploadText}>Photo Upload +</Text>
-        </TouchableOpacity>
+            <TouchableOpacity onPress={handlePickImage}>
+              <Text style={styles.changeAvatarText}>Change Photo</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name"
-            value={fullName}
-            onChangeText={setFullName}
-          />
+          <View style={styles.formSection}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput
+              value={fullName}
+              onChangeText={setFullName}
+              style={styles.input}
+              placeholder="Your full name"
+              placeholderTextColor="#059669"
+            />
+
+            <Text style={styles.label}>Username</Text>
+            <TextInput
+              value={userName}
+              onChangeText={setUserName}
+              style={styles.input}
+              placeholder="Your username"
+              autoCapitalize="none"
+              placeholderTextColor="#059669"
+            />
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <TouchableOpacity
+            onPress={handleSave}
+            style={styles.saveButton}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            )}
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Username</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={userName}
-            onChangeText={setUserName}
-          />
-        </View>
-
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#10B981" />
-          ) : (
-            <Text style={styles.saveText}>Save</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F0FDF4", // Consistent app background
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+    justifyContent: "space-between",
+    padding: 15,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "#D1FAE5",
+  },
+  backButton: {
+    padding: 5,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginLeft: 16,
-    color: "#111827",
+    color: "#064E3B",
   },
-  content: {
+  scrollContainer: {
+    flexGrow: 1,
     padding: 20,
   },
-  photoUploadWrapper: {
+  avatarSection: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 30,
   },
-  photoUploadText: {
-    color: "#3B82F6",
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: "#10B981", // Primary green border
+    backgroundColor: "#ECFDF5",
+  },
+  changeAvatarText: {
+    color: "#10B981",
     fontWeight: "600",
-    marginTop: 8,
+    marginTop: 10,
+    fontSize: 16,
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
+  formSection: {},
   label: {
-    marginBottom: 6,
-    color: "#6B7280",
-    fontSize: 14,
+    fontSize: 16,
+    color: "#059669", // Secondary green
+    marginBottom: 8,
+    fontWeight: "500",
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#FFFFFF",
+    height: 50,
+    borderRadius: 12,
+    paddingHorizontal: 15,
     fontSize: 16,
-    color: "#111827",
+    borderColor: "#D1FAE5",
+    borderWidth: 1,
+    marginBottom: 20,
+    color: "#064E3B",
+  },
+  footer: {
+    padding: 20,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#D1FAE5",
+    backgroundColor: "#F0FDF4",
   },
   saveButton: {
-    backgroundColor: "#D1FAE5",
-    paddingVertical: 14,
-    borderRadius: 10,
+    backgroundColor: "#10B981", // Primary green button
+    padding: 15,
+    borderRadius: 12,
     alignItems: "center",
-    marginTop: 30,
+    shadowColor: "#059669",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
-  saveText: {
-    fontWeight: "600",
-    fontSize: 16,
-    color: "#064E3B",
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
