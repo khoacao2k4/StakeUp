@@ -14,15 +14,14 @@ export async function getProfile() {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (response.status !== 200 || !response.data) throw new Error("Failed to fetch profile");
-  //console.log(response.data);
+  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;
 }
 
-export async function updateProfile(profile: Profile) {
+export async function updateProfile(profile: any) {
   const token = await getToken();
   if (!token) throw new Error("No token found");
-
+  console.log(profile);
   const response = await axios.patch(`${API_BASE_URL}/user/me`, profile, {
     headers: {
       Authorization: `Bearer ${token}`,

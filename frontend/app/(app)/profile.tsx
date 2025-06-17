@@ -7,18 +7,20 @@ import { useEffect, useState } from "react";
 import { getProfile } from "@/lib/api";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { router } from "expo-router";
+import { useAvatarUrl } from "@/hooks/useAvatarUrl";
 
 export interface Profile {
   username?: string;
   full_name?: string;
   website?: string;
-  avatar_url?: string;
+  avatar_path?: string;
 }
 
 export default function ProfileScreen() {
   const { profile, setProfile } = useProfileStore();
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const avatarUrl = useAvatarUrl(profile);
 
   // Fetch the user's profile
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function ProfileScreen() {
             <View style={[styles.avatar, styles.placeholder]} />
           ) : (
             <Image
-              source={profile?.avatar_url || "https://placehold.co/200x200/ECFDF5/064E3B?text=User"}
+              source={avatarUrl || "https://placehold.co/200x200/ECFDF5/064E3B?text=User"}
               style={styles.avatar}
             />
           )}
