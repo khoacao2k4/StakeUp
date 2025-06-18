@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import userRoutes from './routes/user'
+import betRoutes from './routes/bets'
 import { errorHandler } from './middleware/errorHandler'
 
 dotenv.config()
@@ -14,6 +15,7 @@ app.use(errorHandler)
 
 // Routes
 app.use('/user', userRoutes)
+app.use('/bets', betRoutes)
 
 app.get('/', (_req, res) => {
   res.send('Welcome to the Betmate backend 🎲💰')
