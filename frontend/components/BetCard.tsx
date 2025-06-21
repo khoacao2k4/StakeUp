@@ -1,4 +1,8 @@
-import { View, StyleSheet } from "react-native";
+import { Bet } from "@/app/(app)/home";
+import { useEffect, useState } from "react";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { Image } from "expo-image";
+import { Feather } from "@expo/vector-icons";
 
 export const BetCardSkeleton = () => (
   <View style={styles.card}>
@@ -24,6 +28,86 @@ export const BetCardSkeleton = () => (
   </View>
 );
 
+export const BetCard = ({ bet }: { bet: Bet }) => {
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      if (!bet.close_date) { // If no close date, won't show
+        setTimeLeft("No end date");
+        return;
+      }
+      const difference = new Date(bet.close_date).getTime() - new Date().getTime();
+      if (difference <= 0) {
+        setTimeLeft("Closed");
+        return;
+      }
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h left`);
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m left`);
+      } else {
+        setTimeLeft(`${minutes}m left`);
+      }
+    };
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, [bet.close_date]);
+
+  return (
+    <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+      <View style={styles.cardContent}>
+        <View style={styles.cardHeader}>
+          <Image
+            source={{
+              uri:
+                bet.profiles?.avatar_url ||
+                "https://placehold.co/100x100/A7F3D0/064E3B?text=?",
+            }}
+            style={styles.avatar}
+          />
+          <Text style={styles.creatorText}>
+            @{bet.profiles?.username || "anonymous"}
+          </Text>
+        </View>
+        <Text style={styles.title} numberOfLines={2}>
+          {bet.title}
+        </Text>
+        <Text style={styles.description} numberOfLines={2}>
+          {bet.description}
+        </Text>
+        <View style={styles.cardFooter}>
+          <View style={styles.footerStat}>
+            <Feather name="users" size={14} color="#059669" />
+            <Text style={styles.footerText}>
+              {bet.participant_count || "N/A"} bettors
+            </Text>
+          </View>
+          <View style={styles.footerStat}>
+            {timeLeft !== "Closed" && <Feather name="clock" size={14} color="#059669" />}
+            <Text style={styles.footerText}>{timeLeft}</Text>
+          </View>
+        </View>
+      </View>
+      <View style={styles.cardImageContainer}>
+        <Image
+          source={{
+            uri: `https://placehold.co/400x400/ECFDF5/10B981?text=${
+              bet.title.split(" ")[0]
+            }`,
+          }}
+          style={styles.cardImage}
+          transition={300}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
@@ -47,6 +131,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+  creatorText: {
+    color: "#047857",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#1F2937",
+    marginBottom: 4,
+    lineHeight: 24,
+  },
+  description: {
+    fontSize: 14,
+    color: "#4B5563",
+    marginBottom: 12,
+    lineHeight: 20,
+    minHeight: 40, // Ensure space for 2 lines
+  },
   cardFooter: {
     flexDirection: "row",
     alignItems: "center",
@@ -56,14 +168,30 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#F3F4F6",
   },
+  footerStat: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  footerText: {
+    marginLeft: 6,
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#059669",
+  },
   cardImageContainer: {
     width: 100,
+    alignSelf: 'stretch',
+  },
+  cardImage: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#ECFDF5",
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
   },
   // --- Skeleton Styles ---
-  placeholder: { 
-    backgroundColor: "#E5E7EB", 
-    borderRadius: 6 
-  },
+  placeholder: { backgroundColor: "#E5E7EB", borderRadius: 6 },
   placeholderAvatar: {
     width: 28,
     height: 28,

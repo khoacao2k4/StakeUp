@@ -62,7 +62,8 @@ async function getSignedUrls(paths: string[]) {
 
 
 router.get("/", async (req, res) => {
-    const page = Math.min(1, Number(req.query.page) || 1);
+    const page = Math.max(1, Number(req.query.page) || 1);
+    console.log(page);
     const {data, error} = await supabase
         .from('bets')
         .select("*, profiles ( username, avatar_path )")
@@ -77,11 +78,13 @@ router.get("/", async (req, res) => {
     const signedUrls = await getSignedUrls(paths);
     const signedUrlsMap = Object.fromEntries(signedUrls);
     data.forEach((bet) => {
-        if (!bet.profiles.avatar_path) return;
-        const signedUrl = signedUrlsMap[bet.profiles.avatar_path];
-        if (signedUrl) {
-            bet.profiles.avatar_url = signedUrl;
-        }
+        if (bet.profiles.avatar_path) {
+          const signedUrl = signedUrlsMap[bet.profiles.avatar_path];
+          if (signedUrl) {
+              bet.profiles.avatar_url = signedUrl;
+          }
+        };
+        delete bet.profiles.avatar_path;
     });
     res.json(data);
 })
