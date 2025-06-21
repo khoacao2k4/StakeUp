@@ -19,7 +19,6 @@ export interface Profile {
 export default function ProfileScreen() {
   const { profile, setProfile } = useProfileStore();
   const [loading, setLoading] = useState(true);
-  const [modalVisible, setModalVisible] = useState(false);
   const avatarUrl = useAvatarUrl(profile);
 
   // Fetch the user's profile
@@ -36,6 +35,7 @@ export default function ProfileScreen() {
     if (error) {
       Alert.alert("Error signing out", error.message);
     }
+    useAvatarUrl(null);
   };
 
   // TODO: Replace with actual data

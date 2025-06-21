@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
   },
   cardImageContainer: {
     width: 100,
-    alignSelf: 'stretch',
   },
   cardImage: {
     flex: 1,
