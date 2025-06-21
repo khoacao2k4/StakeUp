@@ -42,5 +42,3 @@ export async function createBet(bet: BetInfo) {
   if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;
 }
-
-export async function
