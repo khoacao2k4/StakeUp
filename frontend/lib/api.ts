@@ -1,4 +1,4 @@
-import { BetInfo } from "@/app/(app)/create";
+import { BetInfo } from "@/app/(app)/(tabs)/create";
 import { getToken } from "./supabase";
 import axios from "axios";
 

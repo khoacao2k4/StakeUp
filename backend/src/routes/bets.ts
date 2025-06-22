@@ -63,7 +63,6 @@ async function getSignedUrls(paths: string[]) {
 
 router.get("/", async (req, res) => {
     const page = Math.max(1, Number(req.query.page) || 1);
-    console.log(page);
     const {data, error} = await supabase
         .from('bets')
         .select("*, profiles ( username, avatar_path )")

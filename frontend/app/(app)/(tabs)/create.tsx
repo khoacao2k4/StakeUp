@@ -82,7 +82,7 @@ export default function CreateScreen() {
           {
             text: "OK",
             onPress: () => {
-              router.replace("/(app)/home");
+              router.replace("/(app)/(tabs)/home");
               clearAllFields();
             },
           },

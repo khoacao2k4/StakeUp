@@ -26,7 +26,7 @@ export default function RootLayout() {
     if (init) return;
     const accessApp = segments[0] === '(app)';
     if (session && !accessApp) { // user is signed in and wants to access app
-      router.replace('/(app)/home');
+      router.replace('/(app)/(tabs)/home');
     } else if (!session) {
       router.replace('/(auth)/onboarding');
     } 

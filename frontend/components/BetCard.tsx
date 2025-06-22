@@ -1,4 +1,4 @@
-import { Bet } from "@/app/(app)/home";
+import { Bet } from "@/app/(app)/(tabs)/home";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { Image } from "expo-image";
@@ -59,7 +59,7 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
   }, [bet.close_date]);
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.5}>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Image
@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   avatar: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: 14,
     marginRight: 8,
     backgroundColor: "#ECFDF5",

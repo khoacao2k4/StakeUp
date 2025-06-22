@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase"; // your configured supabase client
-import { Profile } from "@/app/(app)/profile";
+import { Profile } from "@/app/(app)/(tabs)/profile";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export function useAvatarUrl(profile: Profile | null) {

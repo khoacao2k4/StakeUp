@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import { Image } from 'expo-image';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase } from "../../lib/supabase"; // Make sure this path is correct
+import { supabase } from "@/lib/supabase"; // Make sure this path is correct
 import { useEffect, useState } from "react";
 import { getProfile } from "@/lib/api";
 import { useProfileStore } from "@/stores/useProfileStore";
