@@ -12,8 +12,8 @@ import { useAvatarUrl } from "@/hooks/useAvatarUrl";
 export interface Profile {
   username?: string;
   full_name?: string;
-  website?: string;
   avatar_path?: string;
+  coin_balance?: number;
 }
 
 export default function ProfileScreen() {
@@ -106,7 +106,7 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <ProfileButton icon="dollar-sign" text="Coin Balance: 1,200" />
+              <ProfileButton icon="dollar-sign" text={`Coin Balance: ${profile.coin_balance}`} />
               <ProfileButton icon="award" text="Achievements" hasNav />
               <ProfileButton icon="settings" text="Settings" hasNav />
             </>

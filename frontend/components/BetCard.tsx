@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export const BetCardSkeleton = () => (
   <View style={styles.card}>
@@ -59,7 +60,15 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
   }, [bet.close_date]);
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.5}>
+    <TouchableOpacity 
+      style={styles.card} 
+      activeOpacity={0.5} 
+      onPress={() => {
+        router.push({
+          pathname: "/(app)/bets/[id]",
+          params: { id: bet.id },
+        });
+      }}>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Image

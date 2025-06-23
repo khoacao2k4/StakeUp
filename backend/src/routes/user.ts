@@ -11,7 +11,7 @@ router.get('/me', verifyToken, async (req, res) => {
 
   const { data, error } =  await supabase
     .from('profiles')
-    .select(`full_name, username, avatar_path`)
+    .select(`full_name, username, avatar_path, coin_balance`)
     .eq('id', userId)
     .single()
 
@@ -21,26 +21,6 @@ router.get('/me', verifyToken, async (req, res) => {
   }
   res.json(data);
 })
-
-// router.patch('/me', verifyToken, async (req, res) => {
-//   const user = res.locals.user
-//   const userId = user.sub
-
-//   const { full_name, username } = req.body
-
-//   const { data, error } = await supabase
-//     .from('profiles')
-//     .update({ full_name, username })
-//     .eq('id', userId)
-//     .select(`full_name, username, avatar_url`)
-//     .single()
-
-//   if (error) {
-//     res.status(500).json({ error: error.message });
-//     return;
-//   }
-//   res.json(data);
-// })
 
 const upload = multer({ storage: multer.memoryStorage() });
 
