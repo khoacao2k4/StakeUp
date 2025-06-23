@@ -77,6 +77,8 @@ router.get("/", async (req, res) => {
     const signedUrls = await getSignedUrls(paths);
     const signedUrlsMap = Object.fromEntries(signedUrls);
     data.forEach((bet) => {
+        delete bet.options;
+        delete bet.creator_id;
         if (bet.profiles.avatar_path) {
           const signedUrl = signedUrlsMap[bet.profiles.avatar_path];
           if (signedUrl) {
@@ -85,6 +87,29 @@ router.get("/", async (req, res) => {
         };
         delete bet.profiles.avatar_path;
     });
+    res.json(data);
+})
+
+router.get("/:bet_id", async (req, res) => {
+    const { data, error } = await supabase
+      .from('bets')
+      .select("*, profiles ( username, avatar_path, coin_balance )")
+      .eq("id", req.params.bet_id)
+      .single()
+
+    if (error) {
+        res.status(500).json({ error: error.message });
+        return;
+    }
+    if (!data.profiles.avatar_path) { // skip get avatar
+      res.json(data);
+      return;
+    }
+    const signedUrl = await getSignedUrls([data.profiles.avatar_path]);
+    if (signedUrl[0][1]) {
+      data.profiles.avatar_url = signedUrl[0][1];
+      delete data.profiles.avatar_path;
+    }
     res.json(data);
 })
 

@@ -43,8 +43,14 @@ export async function createBet(bet: BetInfo) {
   return response.data;
 }
 
-export async function getBets(page: number = 1) {
+export async function getAllBets(page: number = 1) {
   const response = await axios.get(`${API_BASE_URL}/bets?page=${page}`);
+  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
+  return response.data;
+}
+
+export async function getBetDetails(bet_id: string) {
+  const response = await axios.get(`${API_BASE_URL}/bets/${bet_id}`);
   if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;
 }

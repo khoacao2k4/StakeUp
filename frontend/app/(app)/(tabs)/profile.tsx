@@ -13,6 +13,7 @@ export interface Profile {
   username?: string;
   full_name?: string;
   avatar_path?: string;
+  avatar_url?: string;
   coin_balance?: number;
 }
 

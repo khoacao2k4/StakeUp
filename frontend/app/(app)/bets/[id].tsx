@@ -16,14 +16,9 @@ import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider"; // Import the new slider
+import BetDetailSkeleton from "@/components/BetDetailSkeleton";
+import { Profile } from "@/app/(app)/(tabs)/profile";
 
-// --- Type Definitions ---
-interface Profile {
-  username: string;
-  avatar_path: string;
-  full_name: string;
-  coin_balance: number; // User's total coins
-}
 interface Bet {
   id: string;
   title: string;
@@ -32,98 +27,6 @@ interface Bet {
   profiles: Profile | null;
   participant_count: number;
 }
-
-// --- Skeleton Placeholder ---
-const BetDetailSkeleton = () => (
-  <View style={styles.container}>
-    <View style={styles.imageHeader}>
-      <View style={[styles.placeholder, { width: "100%", height: "100%" }]} />
-    </View>
-    <View style={styles.backButtonAbsolute}>
-      <View
-        style={[
-          styles.placeholder,
-          { width: 40, height: 40, borderRadius: 20 },
-        ]}
-      />
-    </View>
-    <View style={styles.creatorInfo}>
-      <View
-        style={[
-          styles.placeholder,
-          { width: 150, height: 48, borderRadius: 24 },
-        ]}
-      />
-    </View>
-    <View style={styles.content}>
-      <View
-        style={[
-          styles.placeholder,
-          {
-            width: "80%",
-            height: 30,
-            borderRadius: 8,
-            alignSelf: "center",
-            marginBottom: 10,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.placeholder,
-          {
-            width: "50%",
-            height: 20,
-            borderRadius: 8,
-            alignSelf: "center",
-            marginBottom: 20,
-          },
-        ]}
-      />
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-around",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <View
-          style={[
-            styles.placeholder,
-            { flex: 1, height: 40, borderRadius: 12 },
-          ]}
-        />
-        <View
-          style={[
-            styles.placeholder,
-            { flex: 1, height: 40, borderRadius: 12 },
-          ]}
-        />
-      </View>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <View
-          style={[
-            styles.placeholder,
-            { flex: 1, height: 70, borderRadius: 16 },
-          ]}
-        />
-        <View
-          style={[
-            styles.placeholder,
-            { flex: 1, height: 70, borderRadius: 16 },
-          ]}
-        />
-      </View>
-    </View>
-  </View>
-);
 
 export default function BetDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -235,7 +138,7 @@ export default function BetDetailScreen() {
           <View style={styles.imageHeader}>
             <Image source={{ uri: betImage }} style={styles.headerImage} />
             <LinearGradient
-              colors={["rgba(0,0,0,0.6)", "transparent", "rgba(0,0,0,0.8)"]}
+              colors={["rgba(0, 0, 0, 0)", "transparent", "rgba(0,0,0,0.4)"]}
               style={StyleSheet.absoluteFill}
             />
           </View>
@@ -320,7 +223,6 @@ export default function BetDetailScreen() {
             <Text style={styles.wagerAmountText}>{wagerAmount}</Text>
             <Text style={styles.coinText}>COINS</Text>
           </View>
-          {/* --- REPLACEMENT --- */}
           <Slider
             style={{ width: "100%", height: 40 }}
             minimumValue={1}
@@ -332,7 +234,6 @@ export default function BetDetailScreen() {
             maximumTrackTintColor="#E5E7EB"
             thumbTintColor="#10B981"
           />
-          {/* --- END REPLACEMENT --- */}
           <View style={styles.wagerBounds}>
             <Text style={styles.boundText}>1</Text>
             <Text style={styles.boundText}>{userCoinBalance}</Text>

@@ -8,13 +8,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BetCard, BetCardSkeleton } from "@/components/BetCard";
-import { getBets } from "@/lib/api";
+import { getAllBets } from "@/lib/api";
+import { Profile } from "@/app/(app)/(tabs)/profile";
 
-// --- Type Definitions ---
-interface Profile {
-  username: string;
-  avatar_url?: string;
-}
 export interface Bet {
   id: string;
   created_at: string;
@@ -31,7 +27,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false); //after refresh 
 
   const loadBets = async () => {
-    const data = await getBets();
+    const data = await getAllBets();
     setBets(data);
   };
 
