@@ -17,27 +17,20 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider"; // Import the new slider
 import BetDetailSkeleton from "@/components/BetDetailSkeleton";
-import { Profile } from "@/app/(app)/(tabs)/profile";
-
-interface Bet {
-  id: string;
-  title: string;
-  options: { text: string; odds: number }[];
-  close_date: string;
-  profiles: Profile | null;
-  participant_count: number;
-}
+import { Bet } from "@/app/(app)/(tabs)/home";
+import { getBetDetails } from "@/lib/api";
+import timeLeftInfo from "@/utils/calculateTimeLeft";
 
 export default function BetDetailScreen() {
-  const { id } = useLocalSearchParams();
-  const [bet, setBet] = useState<Bet | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [wagerAmount, setWagerAmount] = useState(50);
-  const [creatorAvatar, setCreatorAvatar] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState("");
-  const [userCoinBalance, setUserCoinBalance] = useState(1000); // Mock user balance
+  const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
+  const [bet, setBet] = useState<Bet | null>(null); // bet details
+  const [loading, setLoading] = useState(true); // loading state
+  const [timeLeft, setTimeLeft] = useState(""); 
 
+  const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
+  const [wagerAmount, setWagerAmount] = useState(50); 
+  const userCoinBalance = 1000;
+  
   const [sheetAnimation] = useState(
     new Animated.Value(Dimensions.get("window").height)
   );
@@ -45,51 +38,45 @@ export default function BetDetailScreen() {
   useEffect(() => {
     const fetchBetDetails = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("bets")
-        .select("*, profiles(*)")
-        .eq("id", id)
-        .single();
-      if (error) {
-        Alert.alert("Error", "Could not load bet details.");
+      try {
+        const betDetails: Bet = await getBetDetails(id);
+
+        //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
+        betDetails.options = betDetails.options?.map((opt: { text: string }) => ({
+            ...opt,
+            odds: Math.random() * 2 + 1.5,
+          }));
+        betDetails.close_date = new Date(
+          Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
+        ).toISOString();
+        betDetails.participant_count = Math.floor(Math.random() * 100);
+
+        setBet(betDetails);
+      } catch (error) {
+        console.error("Error fetching bet details:", error);
+      } finally {
         setLoading(false);
-        return;
       }
-      data.options = data.options.map((opt: { text: string }) => ({
-        ...opt,
-        odds: Math.random() * 2 + 1.5,
-      }));
-      data.close_date = new Date(
-        Date.now() + 24 * 60 * 60 * 1000
-      ).toISOString();
-      data.participant_count = Math.floor(Math.random() * 100);
-      if (data.profiles?.avatar_path) {
-        const { data: signedUrlData } = await supabase.storage
-          .from("avatars")
-          .createSignedUrl(data.profiles.avatar_path, 3600);
-        setCreatorAvatar(signedUrlData?.signedUrl || null);
-      }
-      setBet(data as Bet);
-      setLoading(false);
-    };
+    }
     fetchBetDetails();
-  }, [id]);
+  }, []);
 
   useEffect(() => {
-    if (!bet?.close_date) return;
     const timer = setInterval(() => {
-      const difference =
-        new Date(bet.close_date).getTime() - new Date().getTime();
-      if (difference <= 0) {
+      if (!bet?.close_date) { // If no close date, won't show
+        setTimeLeft("No end date");
+        clearInterval(timer);
+        return;
+      }
+      const difference = timeLeftInfo(new Date(bet.close_date).getTime());
+      if (difference.end) {
         setTimeLeft("CLOSED");
         clearInterval(timer);
         return;
       }
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((difference / 1000 / 60) % 60);
-      const seconds = Math.floor((difference / 1000) % 60);
+      const { days, hours, minutes, seconds } = difference;
       setTimeLeft(
-        `${hours.toString().padStart(2, "0")}:${minutes
+        `${days ? `${days}d ` : ""}${hours.toString().padStart(2, "0")}:${minutes
           .toString()
           .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
       );
@@ -104,6 +91,7 @@ export default function BetDetailScreen() {
       useNativeDriver: true,
     }).start();
   };
+
   const handleCloseSheet = () => {
     Animated.timing(sheetAnimation, {
       toValue: Dimensions.get("window").height,
@@ -114,6 +102,7 @@ export default function BetDetailScreen() {
       setWagerAmount(50);
     });
   };
+
   const handlePlaceBet = () => {
     Alert.alert("Success", "Bet placed!", [
       { text: "OK", onPress: handleCloseSheet },
@@ -128,15 +117,12 @@ export default function BetDetailScreen() {
       </View>
     );
 
-  const betImage = `https://placehold.co/600x400/ECFDF5/064E3B?text=${
-    bet.title.split(" ")[0]
-  }`;
   return (
     <View style={{ flex: 1 }}>
       <TouchableWithoutFeedback onPress={handleCloseSheet}>
         <View style={styles.container}>
           <View style={styles.imageHeader}>
-            <Image source={{ uri: betImage }} style={styles.headerImage} />
+            <Image source={{ uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${bet.title.split(" ")[0]}` }} style={styles.headerImage} />
             <LinearGradient
               colors={["rgba(0, 0, 0, 0)", "transparent", "rgba(0,0,0,0.4)"]}
               style={StyleSheet.absoluteFill}
@@ -152,7 +138,7 @@ export default function BetDetailScreen() {
             <Image
               source={{
                 uri:
-                  creatorAvatar ||
+                  bet.profiles?.avatar_url ||
                   "https://placehold.co/100x100/A7F3D0/064E3B?text=?",
               }}
               style={styles.avatar}
@@ -180,7 +166,7 @@ export default function BetDetailScreen() {
             </View>
             <Text style={styles.optionsTitle}>Choose an Option</Text>
             <View style={styles.optionsGrid}>
-              {bet.options.map((option, index) => (
+              {bet.options?.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[

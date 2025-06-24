@@ -1,6 +1,6 @@
 // stores/useProfileStore.ts
 import { create } from 'zustand';
-import { Profile } from '@/app/(app)/profile';
+import { Profile } from '@/app/(app)/(tabs)/profile';
 
 interface ProfileStore {
   profile: Profile | null;

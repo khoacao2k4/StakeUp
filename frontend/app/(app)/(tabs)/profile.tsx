@@ -107,7 +107,7 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <ProfileButton icon="dollar-sign" text={`Coin Balance: ${profile.coin_balance}`} />
+              <ProfileButton icon="dollar-sign" text={`Coin Balance: ${profile?.coin_balance}`} />
               <ProfileButton icon="award" text="Achievements" hasNav />
               <ProfileButton icon="settings" text="Settings" hasNav />
             </>

@@ -16,6 +16,7 @@ export interface Bet {
   created_at: string;
   title: string;
   description: string;
+  options?: { text: string }[];
   close_date?: string;
   participant_count?: number;
   profiles: Profile | null;
@@ -27,8 +28,9 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false); //after refresh 
 
   const loadBets = async () => {
-    const data = await getAllBets();
-    setBets(data);
+    getAllBets()
+      .then((bets) => setBets(bets))
+      .catch((error) => console.error("Failed to load bets", error));
   };
 
   // iniial load

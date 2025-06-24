@@ -4,6 +4,7 @@ import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
+import timeLeftInfo from "@/utils/calculateTimeLeft";
 
 export const BetCardSkeleton = () => (
   <View style={styles.card}>
@@ -33,19 +34,17 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
+    const writeTimeLeft = () => {
       if (!bet.close_date) { // If no close date, won't show
         setTimeLeft("No end date");
         return;
       }
-      const difference = new Date(bet.close_date).getTime() - new Date().getTime();
-      if (difference <= 0) {
+      const difference = timeLeftInfo(new Date(bet.close_date).getTime());
+      if (difference.end) {
         setTimeLeft("Closed");
         return;
       }
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const { days, hours, minutes } = difference;
       if (days > 0) {
         setTimeLeft(`${days}d ${hours}h left`);
       } else if (hours > 0) {
@@ -54,8 +53,9 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
         setTimeLeft(`${minutes}m left`);
       }
     };
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 60000); // Update every minute
+
+    writeTimeLeft();
+    const timer = setInterval(writeTimeLeft, 60000); // Update every minute
     return () => clearInterval(timer);
   }, [bet.close_date]);
 
