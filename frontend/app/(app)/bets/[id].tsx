@@ -1,4 +1,4 @@
-import { useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -20,17 +20,20 @@ import BetDetailSkeleton from "@/components/BetDetailSkeleton";
 import { Bet } from "@/app/(app)/(tabs)/home";
 import { getBetDetails } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
+import { useProfileStore } from "@/stores/useProfileStore";
 
 export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
   const [bet, setBet] = useState<Bet | null>(null); // bet details
   const [loading, setLoading] = useState(true); // loading state
-  const [timeLeft, setTimeLeft] = useState(""); 
+  const [timeLeft, setTimeLeft] = useState("");
+
+  const { profile } = useProfileStore();
+  const hasEmptyBalance = profile?.coin_balance === 0;
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
-  const [wagerAmount, setWagerAmount] = useState(50); 
-  const userCoinBalance = 1000;
-  
+  const [wagerAmount, setWagerAmount] = useState(50);
+
   const [sheetAnimation] = useState(
     new Animated.Value(Dimensions.get("window").height)
   );
@@ -42,10 +45,12 @@ export default function BetDetailScreen() {
         const betDetails: Bet = await getBetDetails(id);
 
         //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
-        betDetails.options = betDetails.options?.map((opt: { text: string }) => ({
+        betDetails.options = betDetails.options?.map(
+          (opt: { text: string }) => ({
             ...opt,
             odds: Math.random() * 2 + 1.5,
-          }));
+          })
+        );
         betDetails.close_date = new Date(
           Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
         ).toISOString();
@@ -57,13 +62,14 @@ export default function BetDetailScreen() {
       } finally {
         setLoading(false);
       }
-    }
+    };
     fetchBetDetails();
   }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!bet?.close_date) { // If no close date, won't show
+      if (!bet?.close_date) {
+        // If no close date, won't show
         setTimeLeft("No end date");
         clearInterval(timer);
         return;
@@ -76,15 +82,18 @@ export default function BetDetailScreen() {
       }
       const { days, hours, minutes, seconds } = difference;
       setTimeLeft(
-        `${days ? `${days}d ` : ""}${hours.toString().padStart(2, "0")}:${minutes
+        `${days ? `${days}d ` : ""}${hours
           .toString()
-          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+          .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+          .toString()
+          .padStart(2, "0")}`
       );
     }, 1000);
     return () => clearInterval(timer);
   }, [bet?.close_date]);
 
   const handleSelectOption = (index: number) => {
+    if (hasEmptyBalance) return;
     setSelectedOption(index);
     Animated.spring(sheetAnimation, {
       toValue: 0,
@@ -122,7 +131,14 @@ export default function BetDetailScreen() {
       <TouchableWithoutFeedback onPress={handleCloseSheet}>
         <View style={styles.container}>
           <View style={styles.imageHeader}>
-            <Image source={{ uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${bet.title.split(" ")[0]}` }} style={styles.headerImage} />
+            <Image
+              source={{
+                uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${
+                  bet.title.split(" ")[0]
+                }`,
+              }}
+              style={styles.headerImage}
+            />
             <LinearGradient
               colors={["rgba(0, 0, 0, 0)", "transparent", "rgba(0,0,0,0.4)"]}
               style={StyleSheet.absoluteFill}
@@ -164,7 +180,14 @@ export default function BetDetailScreen() {
                 <Text style={styles.statText}>{timeLeft}</Text>
               </View>
             </View>
-            <Text style={styles.optionsTitle}>Choose an Option</Text>
+            {/* Conditional title based on coin balance */}
+            {hasEmptyBalance ? (
+              <Text style={styles.warningText}>
+                You have no coins to place a bet!
+              </Text>
+            ) : (
+              <Text style={styles.optionsTitle}>Choose an Option</Text>
+            )}
             <View style={styles.optionsGrid}>
               {bet.options?.map((option, index) => (
                 <TouchableOpacity
@@ -172,8 +195,10 @@ export default function BetDetailScreen() {
                   style={[
                     styles.optionButton,
                     selectedOption === index && styles.optionSelected,
+                    hasEmptyBalance && styles.optionDisabled,
                   ]}
                   onPress={() => handleSelectOption(index)}
+                  disabled={hasEmptyBalance} // Disable button if user has no coins
                 >
                   <Text
                     style={[
@@ -212,7 +237,7 @@ export default function BetDetailScreen() {
           <Slider
             style={{ width: "100%", height: 40 }}
             minimumValue={1}
-            maximumValue={userCoinBalance}
+            maximumValue={profile?.coin_balance}
             value={wagerAmount}
             onValueChange={(value) => setWagerAmount(Math.round(value))}
             step={1}
@@ -222,7 +247,7 @@ export default function BetDetailScreen() {
           />
           <View style={styles.wagerBounds}>
             <Text style={styles.boundText}>1</Text>
-            <Text style={styles.boundText}>{userCoinBalance}</Text>
+            <Text style={styles.boundText}>{profile?.coin_balance}</Text>
           </View>
           <Text style={styles.potentialWinText}>
             Potential Win:{" "}
@@ -299,6 +324,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 20,
   },
+  warningText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#EF4444",
+    textAlign: "center",
+    marginBottom: 16,
+    paddingHorizontal: 20,
+  },
   optionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -318,6 +351,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   optionSelected: { backgroundColor: "#10B981", borderColor: "#047857" },
+  optionDisabled: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB" },
   optionText: {
     fontSize: 16,
     fontWeight: "bold",
