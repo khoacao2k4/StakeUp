@@ -26,7 +26,7 @@ export interface BetInfo {
 }
 
 const formatEndDate = (date: Date | undefined) => {
-  if (!date) return "Select a Date & Time";
+  if (!date) return "Set Date & Time";
   return format(date, "MMM d, yyyy 'at' h:mm a");
 };
 
@@ -169,7 +169,7 @@ export default function CreateScreen() {
               multiline
             />
 
-            <Text style={styles.label}>Bet End Date & Time</Text>
+            <Text style={styles.label}>End Date & Time</Text>
             
             {!showDatePicker && 
               <TouchableOpacity
