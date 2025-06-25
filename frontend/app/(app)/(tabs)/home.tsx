@@ -17,7 +17,8 @@ export interface Bet {
   title: string;
   description: string;
   options?: { text: string }[];
-  close_date?: string;
+  closed_at?: string;
+  settled_option?: string | null;
   participant_count?: number;
   profiles: Profile | null;
 }

@@ -35,11 +35,11 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
 
   useEffect(() => {
     const writeTimeLeft = () => {
-      if (!bet.close_date) { // If no close date, won't show
+      if (!bet.closed_at) { // If no close date, won't show
         setTimeLeft("No end date");
         return;
       }
-      const difference = timeLeftInfo(new Date(bet.close_date).getTime());
+      const difference = timeLeftInfo(new Date(bet.closed_at).getTime());
       if (difference.end) {
         setTimeLeft("Closed");
         return;
@@ -57,7 +57,7 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
     writeTimeLeft();
     const timer = setInterval(writeTimeLeft, 60000); // Update every minute
     return () => clearInterval(timer);
-  }, [bet.close_date]);
+  }, [bet.closed_at]);
 
   return (
     <TouchableOpacity 
