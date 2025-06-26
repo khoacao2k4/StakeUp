@@ -60,34 +60,58 @@ async function getSignedUrls(paths: string[]) {
   return signedUrls;
 }
 
+async function getParticipationCounts(betIds: string[]) {
+  const { data, error } = await supabase
+    .from('bet_participant_counts')
+    .select('*')
+    .in('bet_id', betIds);
+  if (error) throw error;
+
+  const countsMap = Object.fromEntries(
+    data.map((c) => [c.bet_id, c.participants])
+  );
+  return countsMap;
+}
+
 
 router.get("/", async (req, res) => {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const {data, error} = await supabase
-        .from('bets')
-        .select("*, profiles ( username, avatar_path )")
-        .order("created_at", { ascending: false })
-        .range((page - 1) * 10, page * 10 - 1)
-    if (error) {
-        res.status(500).json({ error: error.message });
-        return;
-    }
-    
-    const paths = data.map((bet) => bet.profiles.avatar_path);
-    const signedUrls = await getSignedUrls(paths);
-    const signedUrlsMap = Object.fromEntries(signedUrls);
-    data.forEach((bet) => {
-        delete bet.options;
-        delete bet.creator_id;
-        if (bet.profiles.avatar_path) {
-          const signedUrl = signedUrlsMap[bet.profiles.avatar_path];
-          if (signedUrl) {
-              bet.profiles.avatar_url = signedUrl;
-          }
-        };
-        delete bet.profiles.avatar_path;
-    });
-    res.json(data);
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const {data, error} = await supabase
+    .from('bets')
+    .select("*, profiles ( username, avatar_path )")
+    .order("created_at", { ascending: false })
+    .range((page - 1) * 10, page * 10 - 1)
+  if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+  }
+
+  // Fetch participation counts from the view
+  const betIds = data.map((bet) => bet.id);
+  const participantsData = await getParticipationCounts(betIds);
+
+  data.forEach((bet) => {
+    bet.participant_count = participantsData[bet.id] || 0;
+  });
+
+  // Fetch signed urls
+  const paths = data.map((bet) => bet.profiles.avatar_path);
+  const signedUrls = await getSignedUrls(paths);
+  const signedUrlsMap = Object.fromEntries(signedUrls);
+
+  data.forEach((bet) => {
+    delete bet.options;
+    delete bet.creator_id;
+    delete bet.settled_option;
+    if (bet.profiles.avatar_path) {
+      const signedUrl = signedUrlsMap[bet.profiles.avatar_path];
+      if (signedUrl) {
+          bet.profiles.avatar_url = signedUrl;
+      }
+    };
+    delete bet.profiles.avatar_path;
+  });
+  res.json(data);
 })
 
 router.get("/:bet_id", async (req, res) => {

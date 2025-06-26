@@ -1,19 +1,24 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+// FIX: Import router for navigation and Feather for the icon
+import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 
 export default function BetDetailSkeleton() {
   return (
     <View style={styles.container}>
+      {/* Header Image Placeholder */}
       <View style={styles.imageHeader}>
         <View style={[styles.placeholder, { width: "100%", height: "100%" }]} />
       </View>
-      <View style={styles.backButtonAbsolute}>
-        <View
-          style={[
-            styles.placeholder,
-            { width: 40, height: 40, borderRadius: 20 },
-          ]}
-        />
-      </View>
+      
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.backButtonAbsolute}
+      >
+        <Feather name="arrow-left" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Creator Info Placeholder */}
       <View style={styles.creatorInfo}>
         <View
           style={[
@@ -22,6 +27,8 @@ export default function BetDetailSkeleton() {
           ]}
         />
       </View>
+
+      {/* Content Placeholders */}
       <View style={styles.content}>
         <View
           style={[
@@ -53,6 +60,7 @@ export default function BetDetailSkeleton() {
             justifyContent: "space-around",
             gap: 12,
             marginBottom: 20,
+            paddingHorizontal: 20, // Added for consistent spacing
           }}
         >
           <View
@@ -73,6 +81,7 @@ export default function BetDetailSkeleton() {
             flexDirection: "row",
             justifyContent: "space-between",
             gap: 12,
+            paddingHorizontal: 20, // Added for consistent spacing
           }}
         >
           <View
@@ -96,6 +105,7 @@ export default function BetDetailSkeleton() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0FDF4" },
   imageHeader: { height: 200, width: "100%" },
+  // This style is now used by the real button
   backButtonAbsolute: {
     position: "absolute",
     top: 60,
@@ -103,6 +113,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
     padding: 8,
     borderRadius: 20,
+    // Add zIndex to ensure it's on top of other elements
+    zIndex: 10,
   },
   creatorInfo: {
     flexDirection: "row",
@@ -118,5 +130,5 @@ const styles = StyleSheet.create({
     marginTop: -30,
   },
   content: { flex: 1, paddingTop: 20 },
-  placeholder: { backgroundColor: "#E5E7EB", borderRadius: 12 },
+  placeholder: { backgroundColor: "#E5E7EB" }, // Simplified the placeholder style
 });

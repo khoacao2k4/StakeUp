@@ -93,7 +93,7 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
           <View style={styles.footerStat}>
             <Feather name="users" size={14} color="#059669" />
             <Text style={styles.footerText}>
-              {bet.participant_count || "N/A"} bettors
+              {bet.participant_count} bettors
             </Text>
           </View>
           <View style={styles.footerStat}>
@@ -105,9 +105,10 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
       <View style={styles.cardImageContainer}>
         <Image
           source={{
-            uri: `https://placehold.co/400x400/ECFDF5/10B981?text=${
-              bet.title.split(" ")[0]
-            }`,
+            // uri: `https://placehold.co/400x400/ECFDF5/10B981?text=${
+            //   bet.title.split(" ")[0]
+            // }`,
+            uri: `https://picsum.photos/seed/${bet.id}/400/400`,
           }}
           style={styles.cardImage}
           transition={300}

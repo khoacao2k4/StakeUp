@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -22,6 +22,7 @@ import { getBetDetails } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
 
+
 export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
   const [bet, setBet] = useState<Bet | null>(null); // bet details
@@ -38,6 +39,27 @@ export default function BetDetailScreen() {
     new Animated.Value(Dimensions.get("window").height)
   );
 
+  const calculateAndSetTimeLeft = useCallback((closeDate: string | undefined) => {
+    if (!closeDate) {
+      setTimeLeft("No end date");
+      return false; // Return false to signal the timer should stop
+    }
+    const difference = timeLeftInfo(new Date(closeDate).getTime());
+    if (difference.end) {
+      setTimeLeft("CLOSED");
+      return false; // Return false to signal the timer should stop
+    }
+    const { days, hours, minutes, seconds } = difference;
+    setTimeLeft(
+      `${days ? `${days}d ` : ""}${hours
+        .toString()
+        .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`
+    );
+    return true; // Return true to signal the timer should continue
+  }, []);
+
   useEffect(() => {
     const fetchBetDetails = async () => {
       setLoading(true);
@@ -51,12 +73,14 @@ export default function BetDetailScreen() {
             odds: Math.random() * 2 + 1.5,
           })
         );
-        betDetails.close_date = new Date(
-          Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
-        ).toISOString();
-        betDetails.participant_count = Math.floor(Math.random() * 100);
+        // betDetails.close_date = new Date(
+        //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
+        // ).toISOString();
+        // betDetails.participant_count = Math.floor(Math.random() * 100);
 
         setBet(betDetails);
+
+        calculateAndSetTimeLeft(betDetails.closed_at);
       } catch (error) {
         console.error("Error fetching bet details:", error);
       } finally {
@@ -67,30 +91,20 @@ export default function BetDetailScreen() {
   }, []);
 
   useEffect(() => {
+    // Don't start the timer if there's no bet or close date
+    if (!bet?.closed_at) return;
+
     const timer = setInterval(() => {
-      if (!bet?.close_date) {
-        // If no close date, won't show
-        setTimeLeft("No end date");
+      // The function will calculate the time and tell us if it should stop
+      const shouldContinue = calculateAndSetTimeLeft(bet.closed_at);
+      if (!shouldContinue) {
         clearInterval(timer);
-        return;
       }
-      const difference = timeLeftInfo(new Date(bet.close_date).getTime());
-      if (difference.end) {
-        setTimeLeft("CLOSED");
-        clearInterval(timer);
-        return;
-      }
-      const { days, hours, minutes, seconds } = difference;
-      setTimeLeft(
-        `${days ? `${days}d ` : ""}${hours
-          .toString()
-          .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
-          .toString()
-          .padStart(2, "0")}`
-      );
     }, 1000);
+
+    // Cleanup function to clear the interval when the component unmounts
     return () => clearInterval(timer);
-  }, [bet?.close_date]);
+  }, [bet?.closed_at, calculateAndSetTimeLeft]);
 
   const handleSelectOption = (index: number) => {
     if (hasEmptyBalance) return;
@@ -133,9 +147,10 @@ export default function BetDetailScreen() {
           <View style={styles.imageHeader}>
             <Image
               source={{
-                uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${
-                  bet.title.split(" ")[0]
-                }`,
+                // uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${
+                //   bet.title.split(" ")[0]
+                // }`,
+                uri: `https://picsum.photos/seed/${bet.id}/600/400`
               }}
               style={styles.headerImage}
             />
