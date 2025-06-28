@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import { useAvatarUrl } from "@/hooks/useAvatarUrl";
 
 export interface Profile {
+  id?: number;
   username?: string;
   full_name?: string;
   avatar_path?: string;

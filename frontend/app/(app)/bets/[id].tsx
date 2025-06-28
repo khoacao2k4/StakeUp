@@ -31,6 +31,7 @@ export default function BetDetailScreen() {
 
   const { profile } = useProfileStore();
   const hasEmptyBalance = profile?.coin_balance === 0;
+  const isHost = profile?.id === bet?.profiles?.id;
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
   const [wagerAmount, setWagerAmount] = useState(50);
@@ -159,12 +160,29 @@ export default function BetDetailScreen() {
               style={StyleSheet.absoluteFill}
             />
           </View>
+          {/* Back button */}
           <TouchableOpacity
             onPress={() => router.back()}
-            style={styles.backButtonAbsolute}
+            style={[styles.navigateButton, { left: 20}]}
           >
             <Feather name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
+          {/* Setting button (HOST only) */}
+          {isHost && (
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/(app)/bets/edit/[id]",
+                  params: { id: id },
+                })
+              }
+              style={[styles.navigateButton, { left: 20}]}
+            >
+              <Feather name="edit-2" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+
+
           <View style={styles.creatorInfo}>
             <Image
               source={{
@@ -287,10 +305,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0FDF4" },
   imageHeader: { height: 200, width: "100%" },
   headerImage: { width: "100%", height: "100%" },
-  backButtonAbsolute: {
+  navigateButton: {
     position: "absolute",
     top: 60,
-    left: 20,
     backgroundColor: "rgba(0,0,0,0.3)",
     padding: 8,
     borderRadius: 20,
