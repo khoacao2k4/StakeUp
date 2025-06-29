@@ -10,7 +10,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase"; // Adjust path if needed
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -21,6 +21,7 @@ import { Bet } from "@/app/(app)/(tabs)/home";
 import { getBetDetails } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 
 export default function BetDetailScreen() {
@@ -61,37 +62,86 @@ export default function BetDetailScreen() {
     return true; // Return true to signal the timer should continue
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const fetchBetDetails = async () => {
-        setLoading(true);
-        try {
-          const betDetails: Bet = await getBetDetails(id);
+  // useEffect(() => {
+  //   const fetchBetDetails = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const betDetails: Bet = await getBetDetails(id);
 
-          //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
-          betDetails.options = betDetails.options?.map(
-            (opt: { text: string }) => ({
-              ...opt,
-              odds: Math.random() * 2 + 1.5,
-            })
-          );
-          // betDetails.close_date = new Date(
-          //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
-          // ).toISOString();
-          // betDetails.participant_count = Math.floor(Math.random() * 100);
+  //       //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
+  //       betDetails.options = betDetails.options?.map(
+  //         (opt: { text: string }) => ({
+  //           ...opt,
+  //           odds: Math.random() * 2 + 1.5,
+  //         })
+  //       );
+  //       // betDetails.close_date = new Date(
+  //       //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
+  //       // ).toISOString();
+  //       // betDetails.participant_count = Math.floor(Math.random() * 100);
 
-          setBet(betDetails);
+  //       setBet(betDetails);
 
-          calculateAndSetTimeLeft(betDetails.closed_at);
-        } catch (error) {
-          console.error("Error fetching bet details:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchBetDetails();
-    }, [id])
-  );
+  //       calculateAndSetTimeLeft(betDetails.closed_at);
+  //     } catch (error) {
+  //       console.error("Error fetching bet details:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchBetDetails();
+  // }, []);
+
+  // This one useEffect handles initial data fetching and all realtime subscriptions
+  useEffect(() => {
+    if (!id) return;
+
+    let betChannel: RealtimeChannel | null = null;
+
+    const setupPage = async () => {
+      setLoading(true);
+      try {
+        // 1. Initial fetch for static details and dynamic stats
+        const betDetails = await getBetDetails(id);
+        setBet(betDetails);
+        calculateAndSetTimeLeft(betDetails.closed_at);
+
+        // 2. Subscribe to INSTANT updates for static bet data (title, desc, date)
+        betChannel = supabase
+          .channel(`bet_changes_${id}`)
+          .on<Bet>(
+            "postgres_changes",
+            { 
+              event: "UPDATE", 
+              schema: "public", 
+              table: "bets", 
+              filter: `id=eq.${id}` // Filter by bet ID
+            },
+            (payload) => {
+              console.log("Bet details updated:", payload.new);
+              setBet((current) => ({ ...current, ...payload.new }));
+              if (payload.new.closed_at) {
+                calculateAndSetTimeLeft(payload.new.closed_at);
+              }
+            }
+          )
+          .subscribe();
+
+      } catch (error) {
+        console.error("Error setting up page:", error);
+        Alert.alert("Error", "Could not load bet details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setupPage();
+
+    // Cleanup both subscriptions when the component unmounts
+    return () => {
+      supabase.removeAllChannels();
+    };
+  }, []);
 
   useEffect(() => {
     // Don't start the timer if there's no bet or close date
@@ -107,7 +157,7 @@ export default function BetDetailScreen() {
 
     // Cleanup function to clear the interval when the component unmounts
     return () => clearInterval(timer);
-  }, [bet?.closed_at, calculateAndSetTimeLeft]);
+  }, [bet?.closed_at]);
 
   const handleSelectOption = (index: number) => {
     if (hasEmptyBalance) return;
@@ -249,7 +299,7 @@ export default function BetDetailScreen() {
                       selectedOption === index && styles.optionTextSelected,
                     ]}
                   >
-                    Odds: {option.odds.toFixed(2)}
+                    Odds: xxx {/*option.odds.toFixed(2)*/}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -286,7 +336,7 @@ export default function BetDetailScreen() {
           </View>
           <Text style={styles.potentialWinText}>
             Potential Win:{" "}
-            {(wagerAmount * bet.options[selectedOption].odds).toFixed(0)} Coins
+            {/* {(wagerAmount * bet.options[selectedOption].odds).toFixed(0)*/}xx Coins
           </Text>
           <TouchableOpacity
             style={styles.placeBetButton}

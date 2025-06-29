@@ -43,6 +43,13 @@ export default function CreateScreen() {
     }
   };
 
+  const clearAllFields = () => {
+    setTitle("");
+    setDescription("");
+    setEndDate(undefined);
+    setOptions([{ text: "" }, { text: "" }]);
+  };
+
   const handleCreateBet = async () => {
     const validOptions = options
       .map((option) => ({ text: option.text.trim() }))
@@ -64,6 +71,8 @@ export default function CreateScreen() {
         options: validOptions,
         closed_at: endDate,
       });
+
+      clearAllFields();
 
       Alert.alert(
         "Success",
