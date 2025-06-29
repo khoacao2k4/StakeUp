@@ -56,7 +56,7 @@ export default function EditBetScreen() {
 
   const handleUpdateBet = async () => {
     //only check bet title
-    if (!title) {
+    if (!title || !endDate) {
       Alert.alert("Invalid Input", "The bet must have a title.");
       return;
     }

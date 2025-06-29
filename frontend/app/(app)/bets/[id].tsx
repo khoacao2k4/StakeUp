@@ -10,7 +10,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
+import { useLocalSearchParams, router, useFocusEffect } from "expo-router";
 import { supabase } from "@/lib/supabase"; // Adjust path if needed
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -61,35 +61,37 @@ export default function BetDetailScreen() {
     return true; // Return true to signal the timer should continue
   }, []);
 
-  useEffect(() => {
-    const fetchBetDetails = async () => {
-      setLoading(true);
-      try {
-        const betDetails: Bet = await getBetDetails(id);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchBetDetails = async () => {
+        setLoading(true);
+        try {
+          const betDetails: Bet = await getBetDetails(id);
 
-        //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
-        betDetails.options = betDetails.options?.map(
-          (opt: { text: string }) => ({
-            ...opt,
-            odds: Math.random() * 2 + 1.5,
-          })
-        );
-        // betDetails.close_date = new Date(
-        //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
-        // ).toISOString();
-        // betDetails.participant_count = Math.floor(Math.random() * 100);
+          //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
+          betDetails.options = betDetails.options?.map(
+            (opt: { text: string }) => ({
+              ...opt,
+              odds: Math.random() * 2 + 1.5,
+            })
+          );
+          // betDetails.close_date = new Date(
+          //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
+          // ).toISOString();
+          // betDetails.participant_count = Math.floor(Math.random() * 100);
 
-        setBet(betDetails);
+          setBet(betDetails);
 
-        calculateAndSetTimeLeft(betDetails.closed_at);
-      } catch (error) {
-        console.error("Error fetching bet details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBetDetails();
-  }, []);
+          calculateAndSetTimeLeft(betDetails.closed_at);
+        } catch (error) {
+          console.error("Error fetching bet details:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchBetDetails();
+    }, [id])
+  );
 
   useEffect(() => {
     // Don't start the timer if there's no bet or close date

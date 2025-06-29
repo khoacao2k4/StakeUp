@@ -1,4 +1,3 @@
-import { BetInfo } from "@/app/(app)/(tabs)/create";
 import { getToken } from "./supabase";
 import axios from "axios";
 
@@ -31,6 +30,13 @@ export async function updateProfile(profile: any) {
   return response.data;
 }
 
+interface BetInfo { 
+  title: string; 
+  description: string; 
+  options?: { text: string; }[]; 
+  closed_at: Date; 
+}
+
 export async function createBet(bet: BetInfo) {
   const token = await getToken();
   if (!token) throw new Error("No token found");
@@ -55,7 +61,7 @@ export async function getBetDetails(bet_id: string) {
   return response.data;
 }
 
-export async function updateBet(bet_id: string, bet_info: any) {
+export async function updateBet(bet_id: string, bet_info: BetInfo) {
   const token = await getToken();
   if (!token) throw new Error("No token found");
   const response = await axios.patch(`${API_BASE_URL}/bets/${bet_id}`, bet_info, {

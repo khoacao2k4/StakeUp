@@ -137,4 +137,19 @@ router.get("/:bet_id", async (req, res) => {
     res.json(data);
 })
 
+router.patch("/:bet_id", verifyToken, async (req, res) => {
+  const { data, error } = await supabase
+    .from('bets')
+    .update(req.body)
+    .eq("id", req.params.bet_id)
+    .select()
+    .single()
+    
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.json(data);
+})
+
 export default router;
