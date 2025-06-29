@@ -153,7 +153,7 @@ export default function BetDetailScreen() {
       if (!shouldContinue) {
         clearInterval(timer);
       }
-    }, 1000);
+    }, 500);
 
     // Cleanup function to clear the interval when the component unmounts
     return () => clearInterval(timer);
