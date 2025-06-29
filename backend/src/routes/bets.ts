@@ -117,7 +117,7 @@ router.get("/", async (req, res) => {
 router.get("/:bet_id", async (req, res) => {
     const { data, error } = await supabase
       .from('bets')
-      .select("*, profiles ( username, avatar_path )")
+      .select("*, profiles ( id, username, avatar_path )")
       .eq("id", req.params.bet_id)
       .single()
 

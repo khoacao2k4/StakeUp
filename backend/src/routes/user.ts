@@ -58,7 +58,7 @@ router.patch('/me', verifyToken, upload.single('avatar'), async (req, res) => {
     .from('profiles')
     .update(profileRow)
     .eq('id', userId)
-    .select('full_name, username, avatar_path')
+    .select('id, full_name, username, avatar_path, coin_balance')
     .single();
 
   if (updateError) {

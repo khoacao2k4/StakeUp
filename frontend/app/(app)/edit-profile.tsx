@@ -84,10 +84,9 @@ export default function EditProfileScreen() {
             onPress={() => router.back()}
             style={styles.backButton}
           >
-            <Feather name="chevron-left" size={26} color="#064E3B" />
+            <Feather name="arrow-left" size={24} color="#064E3B" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
-          <View style={{ width: 40 }} />
         </View>
 
         <ScrollView
@@ -157,14 +156,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     padding: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderColor: "#D1FAE5",
   },
   backButton: {
-    padding: 5,
+    position: "absolute", left: 20 
   },
   headerTitle: {
     fontSize: 22,

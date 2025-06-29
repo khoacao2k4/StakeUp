@@ -132,10 +132,18 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F0FDF4" },
-  scrollContainer: { paddingBottom: 30 },
-  header: { padding: 20, alignItems: "center" },
-  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#064E3B" },
-  profileSection: { alignItems: "center", paddingHorizontal: 20 },
+  scrollContainer: { paddingBottom: 100 },
+  header: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#D1FAE5",
+  },
+  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#064E3B" },
+  profileSection: {
+    marginTop: 20,
+    alignItems: "center", 
+    paddingHorizontal: 20 
+  },
   avatar: {
     width: 100,
     height: 100,

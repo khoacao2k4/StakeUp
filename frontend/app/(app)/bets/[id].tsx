@@ -176,7 +176,7 @@ export default function BetDetailScreen() {
                   params: { id: id },
                 })
               }
-              style={[styles.navigateButton, { left: 20}]}
+              style={[styles.navigateButton, { right: 20}]}
             >
               <Feather name="edit-2" size={24} color="#FFFFFF" />
             </TouchableOpacity>
