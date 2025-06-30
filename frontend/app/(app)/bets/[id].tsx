@@ -23,6 +23,10 @@ import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
+interface BetStatsPayload {
+  participant_count: number;
+  odds: number[];
+}
 
 export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
@@ -62,41 +66,51 @@ export default function BetDetailScreen() {
     return true; // Return true to signal the timer should continue
   }, []);
 
-  // useEffect(() => {
-  //   const fetchBetDetails = async () => {
-  //     setLoading(true);
-  //     try {
-  //       const betDetails: Bet = await getBetDetails(id);
-
-  //       //INSERT PLACEHOLDER DATA (ODDS, CLOSE DATE, PARTICIPANT COUNT). #TODO: REMOVE
-  //       betDetails.options = betDetails.options?.map(
-  //         (opt: { text: string }) => ({
-  //           ...opt,
-  //           odds: Math.random() * 2 + 1.5,
-  //         })
-  //       );
-  //       // betDetails.close_date = new Date(
-  //       //   Date.now() + Math.floor(Math.random() * 7) * 60 * 60 * 1000
-  //       // ).toISOString();
-  //       // betDetails.participant_count = Math.floor(Math.random() * 100);
-
-  //       setBet(betDetails);
-
-  //       calculateAndSetTimeLeft(betDetails.closed_at);
-  //     } catch (error) {
-  //       console.error("Error fetching bet details:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchBetDetails();
-  // }, []);
-
-  // This one useEffect handles initial data fetching and all realtime subscriptions
+  // Handles initial data fetching and all realtime subscriptions
   useEffect(() => {
     if (!id) return;
 
     let betChannel: RealtimeChannel | null = null;
+    let statsChannel: RealtimeChannel | null = null;
+
+    const fetchBetStats = async () => {
+      console.log(`Fetching latest bet stats for bet_id: ${id}...`);
+      console.log(id);
+      // const { data, error } = await supabase.rpc("get_bet_stats", { p_bet_id: id });
+      const betId = '8fac54cc-b40b-49a4-aa4e-c28e3e4fdc82';
+      const test = await supabase
+        .from('bet_placements')
+        .select('*')
+        .eq('bet_id', betId);
+
+      console.log(test.data); // should NOT be empty
+
+      const { data, error } = await supabase.rpc('get_bet_stats', {
+        p_bet_id: betId,
+      });
+
+      console.log("Hi", data);
+      if (error) {
+        console.error("Error fetching bet stats:", error);
+      } else if (data) {
+        const stats: BetStatsPayload = data;
+        setBet((currentBet) => {
+          if (!currentBet || !currentBet.options) return currentBet;
+          
+          // Merge the new odds into the existing options
+          const updatedOptions = currentBet.options.map((option, index) => ({
+            ...option,
+            odds: stats.odds[index] || 1, // Use the odd from the new array
+          }));
+
+          return {
+            ...currentBet,
+            participant_count: stats.participant_count,
+            options: updatedOptions,
+          };
+        });
+      }
+    };
 
     const setupPage = async () => {
       setLoading(true);
@@ -105,6 +119,7 @@ export default function BetDetailScreen() {
         const betDetails = await getBetDetails(id);
         setBet(betDetails);
         calculateAndSetTimeLeft(betDetails.closed_at);
+        await fetchBetStats();
 
         // 2. Subscribe to INSTANT updates for static bet data (title, desc, date)
         betChannel = supabase
@@ -125,6 +140,14 @@ export default function BetDetailScreen() {
               }
             }
           )
+          .subscribe();
+        
+        statsChannel = supabase
+          .channel(`stats_changes_${id}`)
+          .on('broadcast', { event: 'stats_updated' }, () => {
+            console.log("Received 'stats_updated' broadcast, refetching stats.");
+            fetchBetStats();
+          })
           .subscribe();
 
       } catch (error) {
@@ -299,7 +322,7 @@ export default function BetDetailScreen() {
                       selectedOption === index && styles.optionTextSelected,
                     ]}
                   >
-                    Odds: xxx {/*option.odds.toFixed(2)*/}
+                    Odds: {option.odds || 1}
                   </Text>
                 </TouchableOpacity>
               ))}

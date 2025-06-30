@@ -66,21 +66,6 @@ router.patch('/me', verifyToken, upload.single('avatar'), async (req, res) => {
     return;
   }
 
-  // // Generate signed URL for avatar
-  // let avatar_url: string | null = null;
-  // if (profileData.avatar_url) {
-  //   const { data: signed, error: signedError } = await supabase.storage
-  //     .from('avatars')
-  //     .createSignedUrl(profileData.avatar_url, 60 * 60); // valid for 1 hour
-
-  //   if (signedError) {
-  //     res.status(500).json({ error: signedError.message });
-  //     return;
-  //   }
-
-  //   avatar_url = signed.signedUrl;
-  // }
-
   res.json(profileData);
 });
 

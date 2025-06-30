@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import userRoutes from './routes/user'
 import betRoutes from './routes/bets'
 import { errorHandler } from './middleware/errorHandler'
+import { startBetUpdateCron } from './cron/bet-updater'
 
 dotenv.config()
 
@@ -27,5 +28,6 @@ app.use((_req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`)
+  console.log(`Server is running at http://localhost:${port}`);
+  startBetUpdateCron();
 })

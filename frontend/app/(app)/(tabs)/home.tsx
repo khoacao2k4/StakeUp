@@ -16,7 +16,7 @@ export interface Bet {
   created_at: string;
   title: string;
   description: string;
-  options?: { text: string }[];
+  options?: { text: string, odds?: number }[];
   closed_at?: string;
   settled_option?: string | null;
   participant_count?: number;
