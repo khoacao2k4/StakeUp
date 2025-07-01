@@ -72,3 +72,19 @@ export async function updateBet(bet_id: string, bet_info: BetInfo) {
   if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;
 }
+
+export async function placeBet(bet_id: string, option_idx: number, amount: number) {
+  const token = await getToken();
+  if (!token) throw new Error("No token found");
+  const payload = { option_idx, amount };
+  const response = await axios.post(`${API_BASE_URL}/bets/${bet_id}/placement`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status !== 200 || !response.data) {
+    console.log(response.data);
+    throw new Error("UIA");
+  }
+  return response.data;
+}

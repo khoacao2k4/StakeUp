@@ -6,26 +6,7 @@ const router = Router();
 const cache = new Map();
 const CACHE_EXPIRATION_TIME = 24 * 60 * 60; // 24 hour
 
-router.post("/", verifyToken, async (req, res) => {
-    const userId = res.locals.user.sub;
-    
-    const betRow = {
-        ...req.body,
-        "creator_id": userId,
-        "status": "open"
-    }
-    const { data: newBet, error: updateError } = await supabase
-        .from('bets')
-        .insert(betRow)
-        .select()
-        .single()
-    if (updateError) {
-        res.status(500).json({ error: updateError.message });
-        return;
-    }
-    res.json(newBet);
-})
-
+/** HELPER FUNCTIONS  **/
 async function getSignedUrls(paths: string[]) {
   const now = Date.now();
   const signedUrls = [];
@@ -73,6 +54,27 @@ async function getParticipationCounts(betIds: string[]) {
   return countsMap;
 }
 
+/* ALL BETs API */
+router.post("/", verifyToken, async (req, res) => {
+    const userId = res.locals.user.sub;
+    
+    const betRow = {
+        ...req.body,
+        "creator_id": userId,
+        "status": "open"
+    }
+    const { data: newBet, error: updateError } = await supabase
+        .from('bets')
+        .insert(betRow)
+        .select()
+        .single()
+    if (updateError) {
+        res.status(500).json({ error: updateError.message });
+        return;
+    }
+    res.json(newBet);
+})
+
 
 router.get("/", async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1);
@@ -114,6 +116,8 @@ router.get("/", async (req, res) => {
   res.json(data);
 })
 
+
+/* SINGLE BET API */
 router.get("/:bet_id", async (req, res) => {
     const { data, error } = await supabase
       .from('bets')
@@ -142,6 +146,38 @@ router.patch("/:bet_id", verifyToken, async (req, res) => {
     .from('bets')
     .update(req.body)
     .eq("id", req.params.bet_id)
+    .select()
+    .single()
+    
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+  res.json(data);
+})
+
+router.post("/:bet_id/placement", verifyToken, async (req, res) => {
+  const userId = res.locals.user.sub;
+  const { amount, option_idx } = req.body;
+  
+  // check if user has enough balance
+  const { data: user, error: userError } = await supabase
+    .from('profiles')
+    .select('coin_balance')
+    .eq('id', userId)
+    .single()
+  if (userError) {
+    res.status(500).json({ error: userError.message });
+    return;
+  }
+  if (user.coin_balance < amount) {
+    res.status(400).json({ error: "Not enough balance" });
+    return;
+  }
+  
+  const { data, error } = await supabase
+    .from('bet_placements')
+    .insert({ bet_id: req.params.bet_id, user_id: userId, amount, option_idx })
     .select()
     .single()
     

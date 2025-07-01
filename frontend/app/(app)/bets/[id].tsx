@@ -18,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider";
 import BetDetailSkeleton from "@/components/BetDetailSkeleton";
 import { Bet } from "@/app/(app)/(tabs)/home";
-import { getBetDetails } from "@/lib/api";
+import { getBetDetails, placeBet } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -172,10 +172,17 @@ export default function BetDetailScreen() {
     });
   };
 
-  const handlePlaceBet = () => {
-    Alert.alert("Success", "Bet placed!", [
-      { text: "OK", onPress: handleCloseSheet },
-    ]);
+  const handlePlaceBet = async () => {
+    if (hasEmptyBalance || selectedOption === null) return;
+    placeBet(id, selectedOption, wagerAmount)
+      .then(() => {
+        Alert.alert("Success", "Bet placed!", [
+          { text: "OK", onPress: handleCloseSheet },
+        ]);
+      })
+      .catch((error: any) => {
+        Alert.alert("Error", error.message || "Could not place the bet.");
+      })
   };
 
   if (loading) return <BetDetailSkeleton />;
