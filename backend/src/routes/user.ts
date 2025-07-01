@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { supabase } from '../lib/supabase'
 import { verifyToken } from '../middleware/auth'
 import multer from 'multer';
+import { getSignedUrls } from './bets';
 
 const router = Router()
 
@@ -19,6 +20,13 @@ router.get('/me', verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
     return;
   }
+
+  const signedUrl = await getSignedUrls([data.avatar_path]);
+  if (signedUrl[0][1]) {
+    (data as any).avatar_url = signedUrl[0][1];
+    //delete data.avatar_path; // TODO: implement this later for frontend
+  }
+      
   res.json(data);
 })
 

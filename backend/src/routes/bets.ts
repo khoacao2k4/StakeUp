@@ -7,7 +7,7 @@ const cache = new Map();
 const CACHE_EXPIRATION_TIME = 24 * 60 * 60; // 24 hour
 
 /** HELPER FUNCTIONS  **/
-async function getSignedUrls(paths: string[]) {
+export async function getSignedUrls(paths: string[]) {
   const now = Date.now();
   const signedUrls = [];
   const pathFetch = []; //list of urls to call supabase
