@@ -63,6 +63,11 @@ export default function CreateScreen() {
       return;
     }
 
+    if (new Set(validOptions.map((option) => option.text)).size !== validOptions.length) {
+      Alert.alert("Duplicate Option", "Please enter unique options.");
+      return;
+    }
+
     setLoading(true);
     try {
       await createBet({

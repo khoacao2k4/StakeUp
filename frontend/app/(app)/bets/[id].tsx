@@ -15,7 +15,7 @@ import { supabase } from "@/lib/supabase"; // Adjust path if needed
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import Slider from "@react-native-community/slider"; // Import the new slider
+import Slider from "@react-native-community/slider";
 import BetDetailSkeleton from "@/components/BetDetailSkeleton";
 import { Bet } from "@/app/(app)/(tabs)/home";
 import { getBetDetails } from "@/lib/api";
@@ -39,7 +39,8 @@ export default function BetDetailScreen() {
   const isHost = profile?.id === bet?.profiles?.id;
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
-  const [wagerAmount, setWagerAmount] = useState(50);
+  const DEFAULT_WAGER_AMOUNT = Math.floor((profile?.coin_balance ?? 2) / 2);
+  const [wagerAmount, setWagerAmount] = useState(DEFAULT_WAGER_AMOUNT);
 
   const [sheetAnimation] = useState(
     new Animated.Value(Dimensions.get("window").height)
@@ -74,35 +75,18 @@ export default function BetDetailScreen() {
     let statsChannel: RealtimeChannel | null = null;
 
     const fetchBetStats = async () => {
-      console.log(`Fetching latest bet stats for bet_id: ${id}...`);
-      console.log(id);
-      // const { data, error } = await supabase.rpc("get_bet_stats", { p_bet_id: id });
-      const betId = '8fac54cc-b40b-49a4-aa4e-c28e3e4fdc82';
-      const test = await supabase
-        .from('bet_placements')
-        .select('*')
-        .eq('bet_id', betId);
-
-      console.log(test.data); // should NOT be empty
-
-      const { data, error } = await supabase.rpc('get_bet_stats', {
-        p_bet_id: betId,
-      });
-
-      console.log("Hi", data);
+      const { data, error } = await supabase.rpc("get_bet_stats", { p_bet_id: id });
       if (error) {
         console.error("Error fetching bet stats:", error);
       } else if (data) {
         const stats: BetStatsPayload = data;
         setBet((currentBet) => {
-          if (!currentBet || !currentBet.options) return currentBet;
-          
+          if (!currentBet || !currentBet.options) return currentBet;          
           // Merge the new odds into the existing options
           const updatedOptions = currentBet.options.map((option, index) => ({
             ...option,
             odds: stats.odds[index] || 1, // Use the odd from the new array
           }));
-
           return {
             ...currentBet,
             participant_count: stats.participant_count,
@@ -115,25 +99,18 @@ export default function BetDetailScreen() {
     const setupPage = async () => {
       setLoading(true);
       try {
-        // 1. Initial fetch for static details and dynamic stats
+        // Fetch bet details
         const betDetails = await getBetDetails(id);
         setBet(betDetails);
         calculateAndSetTimeLeft(betDetails.closed_at);
         await fetchBetStats();
-
-        // 2. Subscribe to INSTANT updates for static bet data (title, desc, date)
+        // Subscribe to realtime updates for the bet from host
         betChannel = supabase
           .channel(`bet_changes_${id}`)
           .on<Bet>(
             "postgres_changes",
-            { 
-              event: "UPDATE", 
-              schema: "public", 
-              table: "bets", 
-              filter: `id=eq.${id}` // Filter by bet ID
-            },
+            { event: "UPDATE", schema: "public", table: "bets", filter: `id=eq.${id}` },
             (payload) => {
-              console.log("Bet details updated:", payload.new);
               setBet((current) => ({ ...current, ...payload.new }));
               if (payload.new.closed_at) {
                 calculateAndSetTimeLeft(payload.new.closed_at);
@@ -141,15 +118,13 @@ export default function BetDetailScreen() {
             }
           )
           .subscribe();
-        
+        // Subscribe to updates from bet stats (1-min interval)
         statsChannel = supabase
           .channel(`stats_changes_${id}`)
           .on('broadcast', { event: 'stats_updated' }, () => {
-            console.log("Received 'stats_updated' broadcast, refetching stats.");
             fetchBetStats();
           })
           .subscribe();
-
       } catch (error) {
         console.error("Error setting up page:", error);
         Alert.alert("Error", "Could not load bet details.");
@@ -160,7 +135,6 @@ export default function BetDetailScreen() {
 
     setupPage();
 
-    // Cleanup both subscriptions when the component unmounts
     return () => {
       supabase.removeAllChannels();
     };
@@ -173,14 +147,10 @@ export default function BetDetailScreen() {
     const timer = setInterval(() => {
       // The function will calculate the time and tell us if it should stop
       const shouldContinue = calculateAndSetTimeLeft(bet.closed_at);
-      if (!shouldContinue) {
-        clearInterval(timer);
-      }
-    }, 500);
-
-    // Cleanup function to clear the interval when the component unmounts
+      if (!shouldContinue) clearInterval(timer);
+    }, 1000);
     return () => clearInterval(timer);
-  }, [bet?.closed_at]);
+  }, [bet?.closed_at, calculateAndSetTimeLeft]);
 
   const handleSelectOption = (index: number) => {
     if (hasEmptyBalance) return;
@@ -198,7 +168,7 @@ export default function BetDetailScreen() {
       useNativeDriver: true,
     }).start(() => {
       setSelectedOption(null);
-      setWagerAmount(50);
+      setWagerAmount(DEFAULT_WAGER_AMOUNT);
     });
   };
 
@@ -220,124 +190,128 @@ export default function BetDetailScreen() {
     <View style={{ flex: 1 }}>
       <TouchableWithoutFeedback onPress={handleCloseSheet}>
         <View style={styles.container}>
-          <View style={styles.imageHeader}>
-            <Image
-              source={{
-                // uri: `https://placehold.co/600x400/ECFDF5/064E3B?text=${
-                //   bet.title.split(" ")[0]
-                // }`,
-                uri: `https://picsum.photos/seed/${bet.id}/600/400`
-              }}
-              style={styles.headerImage}
-            />
-            <LinearGradient
-              colors={["rgba(0, 0, 0, 0)", "transparent", "rgba(0,0,0,0.4)"]}
-              style={StyleSheet.absoluteFill}
-            />
-          </View>
-          {/* Back button */}
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={[styles.navigateButton, { left: 20}]}
-          >
-            <Feather name="arrow-left" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          {/* Setting button (HOST only) */}
-          {isHost && (
-            <TouchableOpacity
-              onPress={() =>
-                router.push({
-                  pathname: "/(app)/bets/edit/[id]",
-                  params: { id: id },
-                })
-              }
-              style={[styles.navigateButton, { right: 20}]}
-            >
-              <Feather name="edit-2" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          )}
-
-
-          <View style={styles.creatorInfo}>
-            <Image
-              source={{
-                uri:
-                  bet.profiles?.avatar_url ||
-                  "https://placehold.co/100x100/A7F3D0/064E3B?text=?",
-              }}
-              style={styles.avatar}
-            />
-            <Text style={styles.creatorName}>
-              @{bet.profiles?.username || "anonymous"}
-            </Text>
-          </View>
-          <ScrollView
-            style={styles.content}
-            contentContainerStyle={{ paddingBottom: 50 }}
-          >
-            <Text style={styles.title}>{bet.title}</Text>
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Feather name="users" size={16} color="#059669" />
-                <Text style={styles.statText}>
-                  {bet.participant_count} Bettors
-                </Text>
-              </View>
-              <View style={styles.statItem}>
-                <Feather name="clock" size={16} color="#059669" />
-                <Text style={styles.statText}>{timeLeft}</Text>
-              </View>
+            <View style={styles.imageHeader}>
+              <Image
+                source={{ uri: `https://picsum.photos/seed/${bet.id}/600/400` }}
+                style={styles.headerImage}
+              />
+              <LinearGradient
+                colors={["rgba(0, 0, 0, 0)", "transparent", "rgba(0,0,0,0.4)"]}
+                style={StyleSheet.absoluteFill}
+              />
             </View>
-            {/* Conditional title based on coin balance */}
-            {hasEmptyBalance ? (
-              <Text style={styles.warningText}>
-                You have no coins to place a bet!
+            <View style={styles.creatorInfo}>
+              <Image
+                source={{
+                  uri:
+                    bet.profiles?.avatar_url ||
+                    "https://placehold.co/100x100/A7F3D0/064E3B?text=?",
+                }}
+                style={styles.avatar}
+              />
+              <Text style={styles.creatorName}>
+                @{bet.profiles?.username || "anonymous"}
               </Text>
-            ) : (
-              <Text style={styles.optionsTitle}>Choose an Option</Text>
-            )}
-            <View style={styles.optionsGrid}>
-              {bet.options?.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.optionButton,
-                    selectedOption === index && styles.optionSelected,
-                    hasEmptyBalance && styles.optionDisabled,
-                  ]}
-                  onPress={() => handleSelectOption(index)}
-                  disabled={hasEmptyBalance} // Disable button if user has no coins
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      selectedOption === index && styles.optionTextSelected,
-                    ]}
-                  >
-                    {option.text}
+            </View>
+            <ScrollView
+              style={styles.content}
+              contentContainerStyle={{ paddingBottom: 50 }}
+            >
+              <Text style={styles.title}>{bet.title}</Text>
+              
+              {bet.description && (
+                <Text style={styles.description}>{bet.description}</Text>
+              )}
+
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Feather name="users" size={16} color="#059669" />
+                  <Text style={styles.statText}>
+                    {bet.participant_count} Bettors
                   </Text>
-                  <Text
+                </View>
+                <View style={styles.statItem}>
+                  <Feather name="clock" size={16} color="#059669" />
+                  <Text style={styles.statText}>{timeLeft}</Text>
+                </View>
+              </View>
+              {/* Conditional title based on coin balance */}
+              {hasEmptyBalance ? (
+                <Text style={styles.warningText}>
+                  You have no coins to place a bet!
+                </Text>
+              ) : (
+                <Text style={styles.optionsTitle}>Choose an Option</Text>
+              )}
+              <View style={styles.optionsGrid}>
+                {bet.options?.map((option, index) => (
+                  <TouchableOpacity
+                    key={index}
                     style={[
-                      styles.oddsText,
-                      selectedOption === index && styles.optionTextSelected,
+                      styles.optionButton,
+                      selectedOption === index && styles.optionSelected,
+                      hasEmptyBalance && styles.optionDisabled,
                     ]}
+                    onPress={() => handleSelectOption(index)}
+                    disabled={hasEmptyBalance} // Disable button if user has no coins
                   >
-                    Odds: {option.odds?.toFixed(2) || 1}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.optionText,
+                        selectedOption === index && styles.optionTextSelected,
+                      ]}
+                    >
+                      {option.text}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.oddsText,
+                        selectedOption === index && styles.optionTextSelected,
+                      ]}
+                    >
+                      Odds: {option.odds?.toFixed(2) || 1}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
             </View>
           </ScrollView>
         </View>
       </TouchableWithoutFeedback>
-      {selectedOption !== null && (
+
+      {/* --- OVERLAYS --- */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={[styles.navigateButton, { left: 20 }]}
+      >
+        <Feather name="arrow-left" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+      {isHost && (
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: "/(app)/bets/edit/[id]",
+              params: { id: id },
+            })
+          }
+          style={[styles.navigateButton, { right: 20 }]}
+        >
+          <Feather name="edit-2" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
+      
+      {selectedOption !== null && bet.options && (
         <Animated.View
-          style={[
-            styles.wagerSheet,
-            { transform: [{ translateY: sheetAnimation }] },
-          ]}
+          style={[styles.wagerSheet, { transform: [{ translateY: sheetAnimation }] }]}
         >
           <Text style={styles.wagerSheetTitle}>Place Your Wager</Text>
+          
+          <View style={styles.selectedOptionContainer}>
+            <Text style={styles.selectedOptionLabel}>Your choice:</Text>
+            <Text style={styles.selectedOptionText}>
+              {bet.options[selectedOption].text}
+            </Text>
+          </View>
+
           <View style={styles.wagerDisplay}>
             <Text style={styles.wagerAmountText}>{wagerAmount}</Text>
             <Text style={styles.coinText}>COINS</Text>
@@ -359,7 +333,7 @@ export default function BetDetailScreen() {
           </View>
           <Text style={styles.potentialWinText}>
             Potential Win:{" "}
-            {/* {(wagerAmount * bet.options[selectedOption].odds).toFixed(0)*/}xx Coins
+            {(wagerAmount * (bet.options[selectedOption].odds || 0)).toFixed(0)} Coins
           </Text>
           <TouchableOpacity
             style={styles.placeBetButton}
@@ -402,14 +376,20 @@ const styles = StyleSheet.create({
   },
   avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 10 },
   creatorName: { fontSize: 16, fontWeight: "bold", color: "#064E3B" },
-  content: { flex: 1, paddingTop: 20 },
+  content: { flex: 1, paddingTop: 20, paddingHorizontal: 20 },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#1F2937",
     textAlign: "center",
-    marginBottom: 12,
-    paddingHorizontal: 20,
+    marginBottom: 8, // Reduced margin
+  },
+  description: {
+    fontSize: 15,
+    color: "#4B5563",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 16,
   },
   statsContainer: {
     flexDirection: "row",
@@ -417,7 +397,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#ECFDF5",
     paddingVertical: 12,
     borderRadius: 16,
-    marginHorizontal: 20,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: "#D1FAE5",
@@ -429,7 +408,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#064E3B",
     marginBottom: 12,
-    paddingHorizontal: 20,
   },
   warningText: {
     fontSize: 18,
@@ -437,14 +415,12 @@ const styles = StyleSheet.create({
     color: "#EF4444",
     textAlign: "center",
     marginBottom: 16,
-    paddingHorizontal: 20,
   },
   optionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 12,
-    paddingHorizontal: 20,
   },
   optionButton: {
     backgroundColor: "#FFFFFF",
@@ -488,7 +464,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1F2937",
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 8, // Reduced margin
+  },
+  selectedOptionContainer: {
+    paddingVertical: 8,
+    marginBottom: 16,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+  },
+  selectedOptionLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  selectedOptionText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#1F2937",
   },
   wagerDisplay: {
     flexDirection: "row",
@@ -529,5 +521,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 16,
   },
-  placeholder: { backgroundColor: "#E5E7EB", borderRadius: 12 },
 });
