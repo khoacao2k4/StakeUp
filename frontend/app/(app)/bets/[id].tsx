@@ -322,7 +322,7 @@ export default function BetDetailScreen() {
                       selectedOption === index && styles.optionTextSelected,
                     ]}
                   >
-                    Odds: {option.odds || 1}
+                    Odds: {option.odds?.toFixed(2) || 1}
                   </Text>
                 </TouchableOpacity>
               ))}
