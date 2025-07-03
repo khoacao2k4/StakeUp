@@ -156,6 +156,23 @@ router.patch("/:bet_id", verifyToken, async (req, res) => {
   res.json(data);
 })
 
+router.get("/:bet_id/placement", verifyToken, async (req, res) => {
+  const userId = res.locals.user.sub;
+  // Fetch current user's placement
+  const { data: placement, error: placementError } = await supabase
+    .from('bet_placements')
+    .select('option_idx, amount')
+    .eq('bet_id', req.params.bet_id)
+    .eq('user_id', userId)
+    .maybeSingle();
+  
+  if (placementError) {
+    res.status(500).json({ error: placementError.message });
+    return;
+  }
+  res.json(placement);
+})
+
 router.post("/:bet_id/placement", verifyToken, async (req, res) => {
   const userId = res.locals.user.sub;
   const { amount, option_idx } = req.body;

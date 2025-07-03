@@ -2,7 +2,7 @@ import { getToken } from "./supabase";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://10cb-2600-6c44-11f0-ee30-c05c-9073-f9fb-626a.ngrok-free.app";
+  "https://a693-2600-6c44-11f0-ee30-a850-25cd-e05c-f6.ngrok-free.app";
 
 export async function getProfile() {
   const token = await getToken();
@@ -86,5 +86,17 @@ export async function placeBet(bet_id: string, option_idx: number, amount: numbe
     console.log(response.data);
     throw new Error("UIA");
   }
+  return response.data;
+}
+
+export async function getBetPlacement(bet_id: string) {
+  const token = await getToken();
+  if (!token) throw new Error("No token found");
+  const response = await axios.get(`${API_BASE_URL}/bets/${bet_id}/placement`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status !== 200) throw new Error(response.data.error);
   return response.data;
 }
