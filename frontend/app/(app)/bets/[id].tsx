@@ -9,6 +9,7 @@ import {
   Animated,
   Dimensions,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase"; // Adjust path if needed
@@ -33,13 +34,15 @@ interface BetPlacement {
   amount: number;
 }
 
+type WagerStatus = "idle" | "submitting" | "success";
+
 export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
   const [bet, setBet] = useState<Bet | null>(null); // bet details
   const [loading, setLoading] = useState(true); // loading state
   const [timeLeft, setTimeLeft] = useState("");
 
-  const { profile } = useProfileStore();
+  const { profile, setProfile } = useProfileStore();
   const [userPlacement, setUserPlacement] = useState<BetPlacement | null>(null);
 
   const hasEmptyBalance = profile?.coin_balance === 0;
@@ -52,6 +55,9 @@ export default function BetDetailScreen() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
   const DEFAULT_WAGER_AMOUNT = Math.floor((profile?.coin_balance ?? 2) / 2);
   const [wagerAmount, setWagerAmount] = useState(DEFAULT_WAGER_AMOUNT);
+
+  // FIX: New state to manage the wager sheet's UI
+  const [wagerStatus, setWagerStatus] = useState<WagerStatus>("idle");
 
   const [sheetAnimation] = useState(
     new Animated.Value(Dimensions.get("window").height)
@@ -173,7 +179,8 @@ export default function BetDetailScreen() {
   }, [bet?.closed_at, calculateAndSetTimeLeft]);
 
   const handleSelectOption = (index: number) => {
-    if (hasEmptyBalance) return;
+    if (hasEmptyBalance || isLocked) return;
+    setWagerAmount(DEFAULT_WAGER_AMOUNT); // Reset wager amount each time
     setSelectedOption(index);
     Animated.spring(sheetAnimation, {
       toValue: 0,
@@ -184,26 +191,30 @@ export default function BetDetailScreen() {
   const handleCloseSheet = () => {
     Animated.timing(sheetAnimation, {
       toValue: Dimensions.get("window").height,
-      duration: 200,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => {
       setSelectedOption(null);
-      setWagerAmount(DEFAULT_WAGER_AMOUNT);
+      setWagerStatus("idle"); // Reset status when sheet closes
     });
   };
 
   const handlePlaceBet = async () => {
     if (hasEmptyBalance || selectedOption === null) return;
-    placeBet(id, selectedOption, wagerAmount)
-      .then(() => {
-        Alert.alert("Success", "Bet placed!", [
-          { text: "OK", onPress: handleCloseSheet },
-        ]);
-        setUserPlacement({ option_idx: selectedOption, amount: wagerAmount });
-      })
-      .catch((error: any) => {
-        Alert.alert("Error", error.message || "Could not place the bet.");
-      });
+    setWagerStatus("submitting"); // Set status to submitting
+    try {
+      await placeBet(id, selectedOption, wagerAmount);
+      // On success, update the UI to the success state
+      setWagerStatus("success");
+      setUserPlacement({ option_idx: selectedOption, amount: wagerAmount });
+      // After x seconds, automatically close the sheet
+      setTimeout(() => {
+        handleCloseSheet();
+      }, 3000);
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Could not place the bet.");
+      setWagerStatus("idle"); // Reset status on error
+    }
   };
 
   if (loading) return <BetDetailSkeleton />;
@@ -339,52 +350,67 @@ export default function BetDetailScreen() {
       )}
 
       {selectedOption !== null && bet.options && (
-        <Animated.View
-          style={[
-            styles.wagerSheet,
-            { transform: [{ translateY: sheetAnimation }] },
-          ]}
-        >
-          <Text style={styles.wagerSheetTitle}>Place Your Wager</Text>
+        <Animated.View style={[styles.wagerSheet, { transform: [{ translateY: sheetAnimation }] }]}>
+          {/* Conditionally render UI based on wagerStatus */}
+          {wagerStatus === "success" ? (
+            <View style={styles.successView}>
+              <Animated.View>
+                <Feather name="check-circle" size={80} color="#10B981" />
+              </Animated.View>
+              <Text style={styles.successTitle}>Bet Placed!</Text>
+              <Text style={styles.successSubtitle}>
+                You wagered {wagerAmount} coins on "{bet.options[selectedOption].text}". Good luck!
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.wagerSheetTitle}>Place Your Wager</Text>
 
-          <View style={styles.selectedOptionContainer}>
-            <Text style={styles.selectedOptionLabel}>Your choice:</Text>
-            <Text style={styles.selectedOptionText}>
-              {bet.options[selectedOption].text}
-            </Text>
-          </View>
+              <View style={styles.selectedOptionContainer}>
+                <Text style={styles.selectedOptionLabel}>Your choice:</Text>
+                <Text style={styles.selectedOptionText}>
+                  {bet.options[selectedOption].text}
+                </Text>
+              </View>
 
-          <View style={styles.wagerDisplay}>
-            <Text style={styles.wagerAmountText}>{wagerAmount}</Text>
-            <Text style={styles.coinText}>COINS</Text>
-          </View>
-          <Slider
-            style={{ width: "100%", height: 40 }}
-            minimumValue={1}
-            maximumValue={profile?.coin_balance}
-            value={wagerAmount}
-            onValueChange={(value) => setWagerAmount(Math.round(value))}
-            step={1}
-            minimumTrackTintColor="#10B981"
-            maximumTrackTintColor="#E5E7EB"
-            thumbTintColor="#10B981"
-          />
-          <View style={styles.wagerBounds}>
-            <Text style={styles.boundText}>1</Text>
-            <Text style={styles.boundText}>{profile?.coin_balance}</Text>
-          </View>
-          <Text style={styles.potentialWinText}>
-            Potential Win: {(wagerAmount * (bet.options[selectedOption].odds || 0)).toFixed(0)} Coins
-          </Text>
-          <TouchableOpacity
-            style={styles.placeBetButton}
-            onPress={handlePlaceBet}
-          >
-            <Text style={styles.placeBetButtonText}>Confirm Bet</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleCloseSheet}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+              <View style={styles.wagerDisplay}>
+                <Text style={styles.wagerAmountText}>{wagerAmount}</Text>
+                <Text style={styles.coinText}>COINS</Text>
+              </View>
+              <Slider
+                style={{ width: "100%", height: 40 }}
+                minimumValue={1}
+                maximumValue={profile?.coin_balance}
+                value={wagerAmount}
+                onValueChange={(value) => setWagerAmount(Math.round(value))}
+                step={1}
+                minimumTrackTintColor="#10B981"
+                maximumTrackTintColor="#E5E7EB"
+                thumbTintColor="#10B981"
+              />
+              <View style={styles.wagerBounds}>
+                <Text style={styles.boundText}>1</Text>
+                <Text style={styles.boundText}>{profile?.coin_balance}</Text>
+              </View>
+              <Text style={styles.potentialWinText}>
+                Potential Win: {(wagerAmount * (bet.options[selectedOption].odds || 0)).toFixed(0)} Coins
+              </Text>
+              <TouchableOpacity
+                style={styles.placeBetButton}
+                onPress={handlePlaceBet}
+                disabled={wagerStatus === 'submitting'}
+              >
+                {wagerStatus === 'submitting' ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.placeBetButtonText}>Confirm Bet</Text>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleCloseSheet}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </Animated.View>
       )}
     </View>
@@ -499,6 +525,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 20,
+    minHeight: 450, 
+    justifyContent: 'center'
   },
   wagerSheetTitle: {
     fontSize: 22,
@@ -554,6 +582,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
+    minHeight: 58, // Set a min-height to prevent layout jump when showing indicator
+    justifyContent: 'center'
   },
   placeBetButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
   cancelText: {
@@ -561,5 +591,23 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "600",
     marginTop: 16,
+  },
+  successView: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#064E3B',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  successSubtitle: {
+    fontSize: 16,
+    color: '#4B5563',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });
