@@ -15,8 +15,7 @@ export default function AppLayout() {
 
   useEffect(() => {
     if (!profile?.id) return;
-    console.log(profile);
-    const channel = supabase
+    const profile_channel = supabase
       .channel(`profile_changes_${profile.id}`)
       .on(
         'postgres_changes',
@@ -33,10 +32,11 @@ export default function AppLayout() {
         }
       )
       .subscribe();
-
+    //console.log(`Subscribed to profile changes for ${profile.id}`);
     // Cleanup the subscription when the app closes
     return () => {
-      supabase.removeChannel(channel);
+      console.log("Unsubscribing from profile changes");
+      profile_channel.unsubscribe();
     };
   }, [profile?.id]); // Re-run if the user logs in/out
   return (

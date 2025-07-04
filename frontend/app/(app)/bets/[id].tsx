@@ -86,7 +86,8 @@ export default function BetDetailScreen() {
 
   // Handles initial data fetching and all realtime subscriptions
   useEffect(() => {
-    if (!id) return;
+    // If there's no ID or profile, don't do anything.
+    if (!id || !profile?.id) return;
 
     let betChannel: RealtimeChannel | null = null;
     let statsChannel: RealtimeChannel | null = null;
@@ -151,18 +152,20 @@ export default function BetDetailScreen() {
             fetchBetStats();
           })
           .subscribe();
+        //console.log("Page setup complete.");
       } catch (error) {
         console.error("Error setting up page:", error);
         Alert.alert("Error", "Could not load bet details.");
       } finally {
+        //console.log(supabase.getChannels());
         setLoading(false);
       }
     };
-
     setupPage();
-
     return () => {
-      supabase.removeAllChannels();
+      if (betChannel) betChannel.unsubscribe();
+      if (statsChannel) statsChannel.unsubscribe();
+      //console.log("Cleanup complete.");
     };
   }, []);
 

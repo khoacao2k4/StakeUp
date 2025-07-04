@@ -44,7 +44,7 @@ export async function createBet(bet: BetInfo) {
       Authorization: `Bearer ${token}`,
     },
   });
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
+  if (response.status !== 201 || !response.data) throw new Error(response.data.error);
   return response.data;
 }
 
@@ -81,8 +81,8 @@ export async function placeBet(bet_id: string, option_idx: number, amount: numbe
       Authorization: `Bearer ${token}`,
     },
   });
-  if (response.status !== 200 || !response.data) {
-    throw new Error("UIA");
+  if (response.status !== 201 || !response.data) {
+    throw new Error(response.data.error);
   }
   return response.data;
 }

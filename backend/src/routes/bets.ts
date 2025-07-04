@@ -72,7 +72,7 @@ router.post("/", verifyToken, async (req, res) => {
         res.status(500).json({ error: updateError.message });
         return;
     }
-    res.json(newBet);
+    res.status(201).json(newBet);
 })
 
 
@@ -176,33 +176,42 @@ router.get("/:bet_id/placement", verifyToken, async (req, res) => {
 router.post("/:bet_id/placement", verifyToken, async (req, res) => {
   const userId = res.locals.user.sub;
   const { amount, option_idx } = req.body;
-  
-  // check if user has enough balance
-  const { data: user, error: userError } = await supabase
-    .from('profiles')
-    .select('coin_balance')
-    .eq('id', userId)
-    .single()
-  if (userError) {
-    res.status(500).json({ error: userError.message });
-    return;
-  }
-  if (user.coin_balance < amount) {
-    res.status(400).json({ error: "Not enough balance" });
-    return;
-  }
-  
-  const { data, error } = await supabase
-    .from('bet_placements')
-    .insert({ bet_id: req.params.bet_id, user_id: userId, amount, option_idx })
-    .select()
-    .single()
+  const bet_id = req.params.bet_id;
+  try {
+    const { data, error } = await supabase.rpc('place_bet', {
+      p_bet_id: bet_id,
+      p_user_id: userId,
+      p_option_idx: option_idx,
+      p_amount: amount,
+    });
     
-  if (error) {
-    res.status(500).json({ error: error.message });
-    return;
+    if (error) {
+      console.log(error.message);
+      throw new Error(error.message);
+    }
+    console.log(data);
+    if (data.error) {
+      let userMessage = "Could not place bet.";
+      let statusCode = 400; // Bad Request by default
+
+      if (data.error.includes('insufficient_balance')) {
+        userMessage = "You do not have enough coins to place this bet.";
+      } else if (data.error.includes('bet_closed')) {
+        userMessage = "This bet is already closed.";
+      } else if (data.error.includes('user_already_bet')) {
+        userMessage = "You have already placed a bet on this event.";
+      } else {
+        console.error("Database transaction error:", data.error);
+        statusCode = 500; // Internal Server Error
+      }
+      res.status(statusCode).json({ error: userMessage });
+    }
+    // Return the updated bet placement
+    res.status(201).json(data);
+  } catch (err) {
+    console.error("API error in /placement:", err);
+    res.status(500).json({ error: "An unexpected error occurred." });
   }
-  res.json(data);
 })
 
 export default router;
