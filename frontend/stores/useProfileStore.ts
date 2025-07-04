@@ -4,7 +4,7 @@ import { Profile } from '@/app/(app)/(tabs)/profile';
 
 interface ProfileStore {
   profile: Profile | null;
-  setProfile: (p: Profile) => void;
+  setProfile: (p: Profile | null) => void;
 }
 
 export const useProfileStore = create<ProfileStore>((set) => ({

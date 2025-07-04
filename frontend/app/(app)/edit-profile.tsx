@@ -65,7 +65,7 @@ export default function EditProfileScreen() {
       ) {
         await AsyncStorage.removeItem(`avatar-${profile?.avatar_path}`);
       }
-      setProfile(updatedProfile);
+      //setProfile(updatedProfile);
       Alert.alert("Success", "Your profile has been updated!", [
         { text: "OK", onPress: () => router.back() },
       ]);

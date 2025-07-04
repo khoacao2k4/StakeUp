@@ -38,6 +38,7 @@ export default function ProfileScreen() {
       Alert.alert("Error signing out", error.message);
     }
     useAvatarUrl(null);
+    setProfile(null);
   };
 
   // TODO: Replace with actual data
