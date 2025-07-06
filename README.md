@@ -15,7 +15,7 @@
 
 ## About The Project
 
-StakeUp is a mobile app designed to make friendly challenges between friends simple, engaging, and memorable. Whether you're competing in fitness goals, game predictions, or personal milestones, StakeUp helps you initiate, track, and settle outcomes, ensuring no one forgets what’s at stake.
+StakeUp is a mobile app designed to make friendly challenges between friends simple, engaging, and memorable. Whether you're competing in fitness goals (Who do more pushups this week?), game predictions (Will Arsenal win the UEFA Champions League?), or just simple stuff (Who won more League of Legends games?), StakeUp helps you initiate, track, and settle outcomes, ensuring no one forgets what’s at stake.
 
 This repository contains the complete source code for both the mobile frontend and the backend server.
 
