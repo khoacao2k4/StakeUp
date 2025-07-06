@@ -62,7 +62,7 @@ export default function BetDetailScreen() {
   const [isSettleModalVisible, setIsSettleModalVisible] = useState(false);
   const isSettled = bet?.status === 'settled';
   const canSettle = isHost && isBetClosed && !isSettled;
-  const isLocked = isBetClosed || hasUserBet || isSettled;
+  const isLocked = isBetClosed || hasUserBet || isSettled || hasEmptyBalance;
   const didUserWin = hasUserBet && userPlacement.option_idx === bet?.settled_option;
 
   const [sheetAnimation] = useState(
@@ -302,7 +302,11 @@ export default function BetDetailScreen() {
 
             {/* Conditional title based on coin balance */}
             <Text style={styles.optionsTitle}>
-              {isSettled ? "Final Result" : isBetClosed ? "Betting has closed" : hasUserBet ? "Your chosen option" : "Choose an Option"}
+              {isSettled ? "Final Result" : 
+              isBetClosed ? "Betting has closed" : 
+              hasUserBet ? "Your chosen option" : 
+              hasEmptyBalance ? "You have no coins 😔" :
+              "Choose an Option"}
             </Text>
 
             {isSettled && hasUserBet && (
