@@ -4,6 +4,7 @@ import { useProfileStore } from "@/stores/useProfileStore";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function AppLayout() {
   const { profile, setProfile } = useProfileStore();
@@ -40,9 +41,9 @@ export default function AppLayout() {
     };
   }, [profile?.id]); // Re-run if the user logs in/out
   return (
-    <>
+    <GestureHandlerRootView>
       <Stack screenOptions={{ headerShown: false }} />
       <StatusBar style="dark" />
-    </>
+    </GestureHandlerRootView>
   );
 }

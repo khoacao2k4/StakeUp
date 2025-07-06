@@ -14,7 +14,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase"; // Adjust path if needed
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider";
 import BetDetailSkeleton from "@/components/BetDetailSkeleton";
@@ -23,6 +23,7 @@ import { getBetDetails, getBetPlacement, placeBet } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import SettlementModal from "@/components/SettlementModal";
 
 interface BetStatsPayload {
   participant_count: number;
@@ -37,53 +38,38 @@ interface BetPlacement {
 type WagerStatus = "idle" | "submitting" | "success";
 
 export default function BetDetailScreen() {
+  // BET DETAIL
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
   const [bet, setBet] = useState<Bet | null>(null); // bet details
   const [loading, setLoading] = useState(true); // loading state
   const [timeLeft, setTimeLeft] = useState("");
-
+  // USER DETAIL
   const { profile, setProfile } = useProfileStore();
   const [userPlacement, setUserPlacement] = useState<BetPlacement | null>(null);
-
   const hasEmptyBalance = profile?.coin_balance === 0;
   const isHost = profile?.id === bet?.profiles?.id;
-
+  // BET LOGIC
   const isBetClosed = timeLeft === "CLOSED";
   const hasUserBet = userPlacement !== null;
-  const isLocked = isBetClosed || hasUserBet; //lock options if bet closed or user already bet
 
+  // BET PLACEMENT
   const [selectedOption, setSelectedOption] = useState<number | null>(null); //options selected
   const DEFAULT_WAGER_AMOUNT = Math.floor((profile?.coin_balance ?? 2) / 2);
   const [wagerAmount, setWagerAmount] = useState(DEFAULT_WAGER_AMOUNT);
-
-  // FIX: New state to manage the wager sheet's UI
   const [wagerStatus, setWagerStatus] = useState<WagerStatus>("idle");
+
+  // BET SETTLEMENT
+  const [isSettleModalVisible, setIsSettleModalVisible] = useState(false);
+  const isSettled = bet?.status === 'settled';
+  const canSettle = isHost && isBetClosed && !isSettled;
+  const isLocked = isBetClosed || hasUserBet || isSettled;
+  const didUserWin = hasUserBet && userPlacement.option_idx === bet?.settled_option;
 
   const [sheetAnimation] = useState(
     new Animated.Value(Dimensions.get("window").height)
   );
 
-  const calculateAndSetTimeLeft = useCallback((closeDate: string | undefined) => {
-      if (!closeDate) {
-        setTimeLeft("No end date");
-        return false; // Return false to signal the timer should stop
-      }
-      const difference = timeLeftInfo(new Date(closeDate).getTime());
-      if (difference.end) {
-        setTimeLeft("CLOSED");
-        return false; // Return false to signal the timer should stop
-      }
-      const { days, hours, minutes, seconds } = difference;
-      setTimeLeft(
-        `${days ? `${days}d ` : ""}${hours
-          .toString()
-          .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
-          .toString()
-          .padStart(2, "0")}`
-      );
-      return true; // Return true to signal the timer should continue
-    }, []);
-
+  // ================================================= FUNCTIONS =================================================
   // Handles initial data fetching and all realtime subscriptions
   useEffect(() => {
     // If there's no ID or profile, don't do anything.
@@ -169,6 +155,27 @@ export default function BetDetailScreen() {
     };
   }, []);
 
+  const calculateAndSetTimeLeft = useCallback((closeDate: string | undefined) => {
+      if (!closeDate) {
+        setTimeLeft("No end date");
+        return false; // Return false to signal the timer should stop
+      }
+      const difference = timeLeftInfo(new Date(closeDate).getTime());
+      if (difference.end) {
+        setTimeLeft("CLOSED");
+        return false; // Return false to signal the timer should stop
+      }
+      const { days, hours, minutes, seconds } = difference;
+      setTimeLeft(
+        `${days ? `${days}d ` : ""}${hours
+          .toString()
+          .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
+          .toString()
+          .padStart(2, "0")}`
+      );
+      return true; // Return true to signal the timer should continue
+    }, []);
+
   useEffect(() => {
     // Don't start the timer if there's no bet or close date
     if (!bet?.closed_at) return;
@@ -177,7 +184,7 @@ export default function BetDetailScreen() {
       // The function will calculate the time and tell us if it should stop
       const shouldContinue = calculateAndSetTimeLeft(bet.closed_at);
       if (!shouldContinue) clearInterval(timer);
-    }, 1000);
+    }, 500);
     return () => clearInterval(timer);
   }, [bet?.closed_at, calculateAndSetTimeLeft]);
 
@@ -219,6 +226,13 @@ export default function BetDetailScreen() {
       setWagerStatus("idle"); // Reset status on error
     }
   };
+
+  // This function is now passed to the child component
+  const onBetSettled = (winningOptionIndex: number) => {
+    setBet(prev => prev ? { ...prev, settled_option: winningOptionIndex, status: 'settled' } : null);
+  };
+
+  // ================================================ UI/UX ================================================
 
   if (loading) return <BetDetailSkeleton />;
   if (!bet)
@@ -277,55 +291,49 @@ export default function BetDetailScreen() {
                 <Text style={styles.statText}>{timeLeft}</Text>
               </View>
             </View>
+
+            {/* Button trigger the settlement modal (HOST ONLY) */}
+            {canSettle && (
+              <TouchableOpacity style={styles.settleButton} onPress={() => setIsSettleModalVisible(true)}>
+                 <FontAwesome name="gavel" size={24} color="#065F46" />
+                <Text style={styles.settleButtonText}>Settle This Bet</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Conditional title based on coin balance */}
-            {hasEmptyBalance ? (
-              <Text style={styles.warningText}>
-                You have no coins to place a bet!
-              </Text>
-            ) : (
-              <Text style={styles.optionsTitle}>
-                {isBetClosed
-                  ? "Betting has closed"
-                  : hasUserBet
-                  ? "Your chosen option"
-                  : "Choose an Option"}
-              </Text>
+            <Text style={styles.optionsTitle}>
+              {isSettled ? "Final Result" : isBetClosed ? "Betting has closed" : hasUserBet ? "Your chosen option" : "Choose an Option"}
+            </Text>
+
+            {isSettled && hasUserBet && (
+              <View style={[styles.resultBanner, didUserWin ? styles.resultBannerWin : styles.resultBannerLoss]}>
+                <Feather name={didUserWin ? "award" : "x-octagon"} size={20} color="#fff" />
+                <Text style={styles.resultBannerText}>{didUserWin ? `You Won! Payout: XX Coins` : "You Lost"}</Text>
+              </View>
             )}
             <View style={styles.optionsGrid}>
-              {
-                bet.options?.map((option, index) => {
-                  const isSelected = userPlacement?.option_idx === index || selectedOption === index;
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.optionButton,
-                        isLocked && !isSelected && styles.optionDisabled,
-                        isSelected && styles.optionSelected,
-                      ]}
-                      onPress={() => handleSelectOption(index)}
-                      disabled={isLocked}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          isSelected && styles.optionTextSelected,
-                        ]}
-                      >
-                        {option.text}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.oddsText,
-                          isSelected && styles.optionTextSelected,
-                        ]}
-                      >
-                        Odds: {option.odds?.toFixed(2) || 1}
-                      </Text>
-                    </TouchableOpacity>
-                  )
-                })
-              }
+              {bet.options?.map((option, index) => {
+                const isSelected = userPlacement?.option_idx === index;
+                const isWinningOption = bet.settled_option === index;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.optionButton,
+                      isLocked && !isSelected && styles.optionLocked,
+                      isSelected && styles.optionSelected,
+                      isSettled && isWinningOption && styles.optionWinner,
+                      isSettled && !isWinningOption && styles.optionLoser,
+                    ]}
+                    onPress={() => handleSelectOption(index)}
+                    disabled={isLocked}
+                  >
+                    {isSettled && isWinningOption && <Feather name="check-circle" size={16} color="#fff" style={styles.winnerIcon} />}
+                    <Text style={[styles.optionText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>{option.text}</Text>
+                    <Text style={[styles.oddsText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>Odds: {option.odds?.toFixed(2) || '1.00'}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -416,6 +424,13 @@ export default function BetDetailScreen() {
           )}
         </Animated.View>
       )}
+      <SettlementModal
+        isVisible={isSettleModalVisible}
+        onClose={() => setIsSettleModalVisible(false)}
+        bet={bet}
+        userPlacementIdx={userPlacement?.option_idx ?? null}
+        onBetSettled={onBetSettled}
+      />
     </View>
   );
 }
@@ -613,4 +628,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
+  settleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F97316',
+    paddingVertical: 14,
+    borderRadius: 16,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  settleButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+  resultBanner: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 16 },
+  resultBannerWin: { backgroundColor: '#10B981' },
+  resultBannerLoss: { backgroundColor: '#EF4444' },
+  resultBannerText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
+  optionLocked: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
+  optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309' },
+  optionLoser: { backgroundColor: '#F3F4F6', borderColor: '#E5E7EB', opacity: 0.5 },
+  winnerIcon: { position: 'absolute', top: 8, right: 8 },
 });

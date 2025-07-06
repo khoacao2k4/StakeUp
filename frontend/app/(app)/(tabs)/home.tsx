@@ -18,9 +18,10 @@ export interface Bet {
   description: string;
   options?: { text: string, odds?: number }[];
   closed_at?: string;
-  settled_option?: string | null;
+  settled_option?: number | null;
   participant_count?: number;
   profiles: Profile | null;
+  status?: string;
 }
 
 export default function HomeScreen() {
