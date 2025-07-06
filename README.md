@@ -5,10 +5,20 @@
   <img src="frontend/assets/images/logo.svg" alt="StakeUp Onboarding" width="250"/>
 </div>
 
-<div align="center" style="font-size: 20px;">
+<div align="center" style="font-size: 32px;">
 
 **Friendly Wagers, Real Fun.**
 
+</div>
+
+---
+
+## Screenshots
+
+<div align="center">
+  <img src="assets/homepage.jpg" alt="Homepage" width="250" />
+  <img src="assets/profile.jpg" alt="Profile" width="250" />
+  <img src="assets/bet_details.jpg" alt="Bet Details" width="250" />
 </div>
 
 ---
