@@ -9,6 +9,7 @@ import {
   Dimensions,
   Modal,
   Pressable,
+  ScrollView,
 } from 'react-native';
 import { Bet } from '@/app/(app)/(tabs)/home';
 import { settleBet } from '@/lib/api';
@@ -30,6 +31,7 @@ interface SettlementModalProps {
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const MAX_SHEET_HEIGHT = SCREEN_HEIGHT * 0.7;
 
 export default function SettlementModal({
   bet,
@@ -41,8 +43,7 @@ export default function SettlementModal({
   const [settleSelection, setSettleSelection] = useState<number | null>(null); // Index of the option to settle
   const [isSettling, setIsSettling] = useState(false); // Loading state
   
-  const translateY = useSharedValue(SCREEN_HEIGHT);
-  const sheetHeight = SCREEN_HEIGHT * 0.45 + (bet.options?.length || 0) * 50;
+  const translateY = useSharedValue(SCREEN_HEIGHT); // Y position of the sheet (0 = open, SCREEN_HEIGHT = closed)
 
   const closeSheet = useCallback(() => {
     // Animate the sheet down
@@ -105,18 +106,19 @@ export default function SettlementModal({
 
   return (
     <Modal transparent visible={isVisible} onRequestClose={closeSheet} animationType="none">
-        {/** Backdrop (used for closing modal + adjust background opacity) */}
-        <Pressable onPress={closeSheet} style={styles.overlay}>
-          <Reanimated.View style={[styles.backdrop, rBackdropStyle]} />
-        </Pressable>
-        <Reanimated.View style={[styles.sheetContainer, rSheetStyle, { height: sheetHeight }]}>
-          {/* The content is wrapped in a Pressable to prevent the backdrop press from firing */}
-          <View style={styles.settleHeader}>
-            <Text style={styles.settleTitle}>Settle This Bet</Text>
-          </View>
-          <Text style={styles.settleSubtitle}>
-            Select the winning option to finalize the result and pay out all winners.
-          </Text>
+      {/** Backdrop (used for closing modal + adjust background opacity) */}
+      <Pressable onPress={closeSheet} style={styles.overlay}>
+        <Reanimated.View style={[styles.backdrop, rBackdropStyle]} />
+      </Pressable>
+      <Reanimated.View style={[styles.sheetContainer, rSheetStyle]}>
+        <View style={styles.settleHeader}>
+          <Text style={styles.settleTitle}>Settle This Bet</Text>
+        </View>
+        <Text style={styles.settleSubtitle}>
+          Select the winning option to finalize the result and pay out all winners.
+        </Text>
+        {/* Options */}
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.optionsGrid}>
             {bet.options?.map((option, index) => {
               const isHostChoice = userPlacementIdx === index;
@@ -142,18 +144,19 @@ export default function SettlementModal({
               );
             })}
           </View>
-          <TouchableOpacity
-            onPress={handleSettleBet}
-            disabled={settleSelection === null || isSettling}
-            style={[styles.settleConfirmButton, settleSelection === null && styles.settleConfirmButtonDisabled]}
-          >
-            {isSettling ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.settleConfirmButtonText}>Confirm Winner & Pay Out</Text>
-            )}
-          </TouchableOpacity>
-        </Reanimated.View>
+        </ScrollView>
+        <TouchableOpacity
+          onPress={handleSettleBet}
+          disabled={settleSelection === null || isSettling}
+          style={[styles.settleConfirmButton, settleSelection === null && styles.settleConfirmButtonDisabled]}
+        >
+          {isSettling ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.settleConfirmButtonText}>Confirm Winner & Pay Out</Text>
+          )}
+        </TouchableOpacity>
+      </Reanimated.View>
     </Modal>
   );
 }
@@ -177,6 +180,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingTop: 30, // Increased top padding after removing grabber
+    maxHeight: MAX_SHEET_HEIGHT
   },
   settleHeader: {
     flexDirection: 'row',
@@ -247,6 +251,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     marginTop: 24,
+    marginBottom: 16,
   },
   settleConfirmButtonDisabled: {
     backgroundColor: '#A7F3D0',
