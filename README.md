@@ -23,7 +23,7 @@ This repository contains the complete source code for both the mobile frontend a
 
 ## Tech Stack
 
-The project is a monorepo containing the frontend and backend.
+StakeUp is organized as a monorepo with both the client and server in one repository.
 
 ### Frontend
 
