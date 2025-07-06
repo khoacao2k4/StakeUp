@@ -15,9 +15,9 @@
 
 ## About The Project
 
-StakeUp is a mobile application designed to make friendly wagers with friends easy, fun, and memorable. Gone are the days of forgetting who owes who a coffee or lunch. With StakeUp, you can easily create, track, and settle bets on anything from sports games to personal challenges.
+StakeUp is a mobile app designed to make friendly challenges between friends simple, engaging, and memorable. Whether you're competing in fitness goals, game predictions, or personal milestones, StakeUp helps you initiate, track, and settle outcomes, ensuring no one forgets what’s at stake.
 
-This repository contains the source code for both the frontend mobile application and the backend server.
+This repository contains the complete source code for both the mobile frontend and the backend server.
 
 ---
 
@@ -127,6 +127,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Contact
 
-Khoa Cao - cqnhatkho@gmail.com
+Khoa Cao - cqnhatkhoa@gmail.com
 
 Project Link: https://github.com/khoacao2k4/StakeUp
