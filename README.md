@@ -7,7 +7,7 @@
 
 <div align="center" style="font-size: 32px;">
 
-**Friendly Wagers, Real Fun.**
+<h3>Friendly Wagers, Real Fun.</h3>
 
 </div>
 
