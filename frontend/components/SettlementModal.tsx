@@ -112,7 +112,7 @@ export default function SettlementModal({
       </Pressable>
       <Reanimated.View style={[styles.sheetContainer, rSheetStyle]}>
         <View style={styles.settleHeader}>
-          <Text style={styles.settleTitle}>Settle This Bet</Text>
+          <Text style={styles.settleTitle}>Time to settle! 🧑‍⚖️</Text>
         </View>
         <Text style={styles.settleSubtitle}>
           Select the winning option to finalize the result and pay out all winners.

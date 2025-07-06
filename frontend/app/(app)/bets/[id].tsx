@@ -295,7 +295,7 @@ export default function BetDetailScreen() {
             {/* Button trigger the settlement modal (HOST ONLY) */}
             {canSettle && (
               <TouchableOpacity style={styles.settleButton} onPress={() => setIsSettleModalVisible(true)}>
-                 <FontAwesome name="gavel" size={24} color="#065F46" />
+                <FontAwesome name="gavel" size={24} color="#0bd697" />
                 <Text style={styles.settleButtonText}>Settle This Bet</Text>
               </TouchableOpacity>
             )}
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F97316',
+    backgroundColor: '#065F46',
     paddingVertical: 14,
     borderRadius: 16,
     marginBottom: 24,
