@@ -5,7 +5,7 @@
   <img src="frontend/assets/images/logo.svg" alt="StakeUp Onboarding" width="250"/>
 </div>
 
-<div align="center">
+<div align="center" style="font-size: 20px;">
 
 **Friendly Wagers, Real Fun.**
 
