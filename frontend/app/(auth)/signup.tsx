@@ -97,7 +97,7 @@ export default function Signup() {
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={signUpWithEmail} style={styles.button} activeOpacity={0.8}>
+                <TouchableOpacity onPress={signUpWithEmail} style={styles.button} activeOpacity={0.5}>
                   <Text style={styles.buttonText}>Sign Up</Text>
                 </TouchableOpacity>
 

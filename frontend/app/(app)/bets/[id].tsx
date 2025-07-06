@@ -10,6 +10,7 @@ import {
   Dimensions,
   ScrollView,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { supabase } from "@/lib/supabase"; // Adjust path if needed
@@ -317,25 +318,28 @@ export default function BetDetailScreen() {
             )}
             <View style={styles.optionsGrid}>
               {bet.options?.map((option, index) => {
-                const isSelected = userPlacement?.option_idx === index;
+                const isSelected = userPlacement?.option_idx === index || selectedOption === index;
                 const isWinningOption = bet.settled_option === index;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={index}
-                    style={[
+                    style={({ pressed }) => [
                       styles.optionButton,
                       isLocked && !isSelected && styles.optionLocked,
                       isSelected && styles.optionSelected,
                       isSettled && isWinningOption && styles.optionWinner,
                       isSettled && !isWinningOption && styles.optionLoser,
+                      pressed ? !isLocked && { opacity: 0.5 } : null,
                     ]}
-                    onPress={() => handleSelectOption(index)}
-                    disabled={isLocked}
+                    onPress={() => {
+                      if (isLocked) return;
+                      handleSelectOption(index);
+                    }}
                   >
                     {isSettled && isWinningOption && <Feather name="check-circle" size={16} color="#fff" style={styles.winnerIcon} />}
                     <Text style={[styles.optionText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>{option.text}</Text>
                     <Text style={[styles.oddsText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>Odds: {option.odds?.toFixed(2) || '1.00'}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>

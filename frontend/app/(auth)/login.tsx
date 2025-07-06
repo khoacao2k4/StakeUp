@@ -90,7 +90,7 @@ export default function Login() {
               <ActivityIndicator size="large" color="#10B981" />
             ) : (
               <>
-                <TouchableOpacity onPress={signInWithEmail} style={styles.button} activeOpacity={0.8}>
+                <TouchableOpacity onPress={signInWithEmail} style={styles.button} activeOpacity={0.5}>
                   <Text style={styles.buttonText}>Login</Text>
                 </TouchableOpacity>
 
