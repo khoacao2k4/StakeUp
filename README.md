@@ -13,6 +13,14 @@
 
 ---
 
+## About The Project
+
+StakeUp is a mobile app designed to make friendly challenges between friends simple, engaging, and memorable. Whether you're competing in fitness goals, game predictions, or personal milestones, StakeUp helps you initiate, track, and settle outcomes, ensuring no one forgets what’s at stake.
+
+This repository contains the complete source code for both the mobile frontend and the backend server.
+
+---
+
 ## Screenshots
 
 <div align="center">
@@ -20,14 +28,6 @@
   <img src="assets/profile.jpg" alt="Profile" width="250" />
   <img src="assets/bet_details.jpg" alt="Bet Details" width="250" />
 </div>
-
----
-
-## About The Project
-
-StakeUp is a mobile app designed to make friendly challenges between friends simple, engaging, and memorable. Whether you're competing in fitness goals, game predictions, or personal milestones, StakeUp helps you initiate, track, and settle outcomes, ensuring no one forgets what’s at stake.
-
-This repository contains the complete source code for both the mobile frontend and the backend server.
 
 ---
 
