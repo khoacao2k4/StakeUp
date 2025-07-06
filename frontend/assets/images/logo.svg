@@ -1,0 +1,19 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chat bubble shape -->
+  <path d="M30 170C18.9543 170 10 161.046 10 150V50C10 38.9543 18.9543 30 30 30H170C181.046 30 190 38.9543 190 50V130C190 141.046 181.046 150 170 150H90L30 170Z" fill="#10B981"/>
+  
+  <!-- Inner shadow for depth -->
+  <path d="M30 170C18.9543 170 10 161.046 10 150V50C10 38.9543 18.9543 30 30 30H170C181.046 30 190 38.9543 190 50V130C190 141.046 181.046 150 170 150H90L30 170Z" fill="url(#inner_shadow)" />
+
+  <!-- Dollar Sign -->
+  <text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="90" font-weight="bold" fill="#F0FDF4">
+    $
+  </text>
+
+  <defs>
+    <radialGradient id="inner_shadow" cx="0.5" cy="0.5" r="0.5" fx="0.25" fy="0.25">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#064E3B" stop-opacity="0.3"/>
+    </radialGradient>
+  </defs>
+</svg>
