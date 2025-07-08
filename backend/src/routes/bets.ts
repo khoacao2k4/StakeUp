@@ -214,4 +214,41 @@ router.post("/:bet_id/placement", verifyToken, async (req, res) => {
   }
 })
 
+router.post("/:bet_id/settle", verifyToken, async (req, res) => {
+  const { option_idx } = req.body;
+  const bet_id = req.params.bet_id;
+  const userId = res.locals.user.sub;
+
+  // check if user is the creator of the bet
+  const { data: betData, error: betError } = await supabase
+    .from('bets')
+    .select('creator_id')
+    .eq('id', bet_id)
+    .maybeSingle();
+  if (betError) {
+    console.log(betError.message);
+    res.status(500).json({ error: betError.message });
+  }
+  if (!betData || betData.creator_id !== userId) {
+    res.status(403).json({ error: 'You are not the creator of this bet.' });
+    return;
+  }
+  console.log("time to setttle");
+
+  // call supabase RPC
+  const { data, error } = await supabase.rpc('settle_bet', {
+    p_bet_id: bet_id,
+    p_winning_option_idx: option_idx,
+  });
+
+  if (error) {
+    console.log(error.message);
+    res.status(500).json({ error: error.message });
+  }
+  if (data.error) res.status(400).json({ error: data.error });
+
+  console.log("settle bet completed ", data);
+  res.status(200).json(data);
+})
+
 export default router;

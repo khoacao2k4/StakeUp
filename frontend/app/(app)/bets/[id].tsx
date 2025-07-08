@@ -87,15 +87,10 @@ export default function BetDetailScreen() {
         const stats: BetStatsPayload = data;
         setBet((currentBet) => {
           if (!currentBet || !currentBet.options) return currentBet;
-          // Merge the new odds into the existing options
-          const updatedOptions = currentBet.options.map((option, index) => ({
-            ...option,
-            odds: stats.odds[index] || 1, // Use the odd from the new array
-          }));
           return {
             ...currentBet,
             participant_count: stats.participant_count,
-            options: updatedOptions,
+            odds: stats.odds,
           };
         });
       }
@@ -125,6 +120,7 @@ export default function BetDetailScreen() {
               filter: `id=eq.${id}`,
             },
             (payload) => {
+              console.log("Bet updated from database:", payload.new);
               setBet((current) => ({ ...current, ...payload.new }));
               if (payload.new.closed_at) {
                 calculateAndSetTimeLeft(payload.new.closed_at);
@@ -226,11 +222,6 @@ export default function BetDetailScreen() {
       Alert.alert("Error", error.message || "Could not place the bet.");
       setWagerStatus("idle"); // Reset status on error
     }
-  };
-
-  // This function is now passed to the child component
-  const onBetSettled = (winningOptionIndex: number) => {
-    setBet(prev => prev ? { ...prev, settled_option: winningOptionIndex, status: 'settled' } : null);
   };
 
   // ================================================ UI/UX ================================================
@@ -338,7 +329,7 @@ export default function BetDetailScreen() {
                   >
                     {isSettled && isWinningOption && <Feather name="check-circle" size={16} color="#fff" style={styles.winnerIcon} />}
                     <Text style={[styles.optionText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>{option.text}</Text>
-                    <Text style={[styles.oddsText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>Odds: {option.odds?.toFixed(2) || '1.00'}</Text>
+                    <Text style={[styles.oddsText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>Odds: {bet.odds ? bet.odds[index].toFixed(2) : "1.00"}</Text>
                   </Pressable>
                 );
               })}
@@ -412,7 +403,7 @@ export default function BetDetailScreen() {
                 <Text style={styles.boundText}>{profile?.coin_balance}</Text>
               </View>
               <Text style={styles.potentialWinText}>
-                Potential Win: {(wagerAmount * (bet.options[selectedOption].odds || 0)).toFixed(0)} Coins
+                Potential Win: {(wagerAmount * (bet.odds?.[selectedOption] || 0)).toFixed(0)} Coins
               </Text>
               <TouchableOpacity
                 style={styles.placeBetButton}
@@ -437,7 +428,6 @@ export default function BetDetailScreen() {
         onClose={() => setIsSettleModalVisible(false)}
         bet={bet}
         userPlacementIdx={userPlacement?.option_idx ?? null}
-        onBetSettled={onBetSettled}
       />
     </View>
   );

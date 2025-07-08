@@ -16,12 +16,13 @@ export interface Bet {
   created_at: string;
   title: string;
   description: string;
-  options?: { text: string, odds?: number }[];
+  options?: { text: string }[];
   closed_at?: string;
   settled_option?: number | null;
   participant_count?: number;
   profiles: Profile | null;
   status?: string;
+  odds?: number[];
 }
 
 export default function HomeScreen() {

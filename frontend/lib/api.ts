@@ -2,7 +2,7 @@ import { getToken } from "./supabase";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://ee04-2600-6c44-11f0-ee30-bc3d-c3bc-46e4-5700.ngrok-free.app";
+  "https://277d085f7946.ngrok-free.app";
 
 export async function getProfile() {
   const token = await getToken();
@@ -100,7 +100,16 @@ export async function getBetPlacement(bet_id: string) {
 }
 
 export async function settleBet(bet_id: string, option_idx: number) {
-  return {
-    status: 200
-  }
+  const token = await getToken();
+  if (!token) throw new Error("No token found");
+
+  const payload = { option_idx };
+  const response = await axios.post(`${API_BASE_URL}/bets/${bet_id}/settle`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status !== 200) throw new Error(response.data.error);
+  return response.data;
 }

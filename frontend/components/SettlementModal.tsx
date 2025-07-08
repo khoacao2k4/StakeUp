@@ -27,7 +27,6 @@ interface SettlementModalProps {
   userPlacementIdx: number | null;
   isVisible: boolean;
   onClose: () => void;
-  onBetSettled: (winningOptionIndex: number) => void;
 }
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -37,8 +36,7 @@ export default function SettlementModal({
   bet,
   userPlacementIdx,
   isVisible,
-  onClose,
-  onBetSettled,
+  onClose
 }: SettlementModalProps) {
   const [settleSelection, setSettleSelection] = useState<number | null>(null); // Index of the option to settle
   const [isSettling, setIsSettling] = useState(false); // Loading state
@@ -63,6 +61,19 @@ export default function SettlementModal({
 
   const handleSettleBet = () => {
     if (settleSelection === null) return;
+    const confirmSettle = async () => {
+      setIsSettling(true);
+      try {
+        await settleBet(bet.id, settleSelection);
+        Alert.alert("Success!", "The bet has been settled.");
+        closeSheet();
+      } catch (error: any) {
+        Alert.alert("Error", error.message || "Could not settle bet.");
+      } finally {
+        setIsSettling(false);
+      }
+    }
+    // Show a confirmation dialog    
     Alert.alert(
       "Confirm Winner",
       `Are you sure you want to declare "${bet.options?.[settleSelection].text}" as the winner? This is final.`,
@@ -70,19 +81,7 @@ export default function SettlementModal({
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm & Pay Out",
-          onPress: async () => {
-            setIsSettling(true);
-            try {
-              await settleBet(bet.id, settleSelection);
-              onBetSettled(settleSelection);
-              Alert.alert("Success!", "The bet has been settled.");
-              closeSheet();
-            } catch (error: any) {
-              Alert.alert("Error", error.message || "Could not settle bet.");
-            } finally {
-              setIsSettling(false);
-            }
-          },
+          onPress: confirmSettle,
         },
       ]
     );
