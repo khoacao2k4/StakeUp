@@ -317,9 +317,9 @@ export default function BetDetailScreen() {
                     style={({ pressed }) => [
                       styles.optionButton,
                       isLocked && !isSelected && styles.optionLocked,
-                      isSelected && styles.optionSelected,
+                      !isSettled && isSelected && styles.optionSelected,
                       isSettled && isWinningOption && styles.optionWinner,
-                      isSettled && !isWinningOption && styles.optionLoser,
+                      isSettled && !isWinningOption && isSelected && styles.optionLoser,
                       pressed ? !isLocked && { opacity: 0.5 } : null,
                     ]}
                     onPress={() => {
@@ -652,6 +652,6 @@ const styles = StyleSheet.create({
   resultBannerText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
   optionLocked: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
   optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309' },
-  optionLoser: { backgroundColor: '#F3F4F6', borderColor: '#E5E7EB', opacity: 0.5 },
+  optionLoser: { backgroundColor: '#EF4444', borderColor: '#B40909' },
   winnerIcon: { position: 'absolute', top: 8, right: 8 },
 });
