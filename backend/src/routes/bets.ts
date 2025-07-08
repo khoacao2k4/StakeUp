@@ -161,7 +161,7 @@ router.get("/:bet_id/placement", verifyToken, async (req, res) => {
   // Fetch current user's placement
   const { data: placement, error: placementError } = await supabase
     .from('bet_placements')
-    .select('option_idx, amount')
+    .select('option_idx, amount, payout')
     .eq('bet_id', req.params.bet_id)
     .eq('user_id', userId)
     .maybeSingle();

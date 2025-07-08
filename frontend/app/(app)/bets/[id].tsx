@@ -34,6 +34,7 @@ interface BetStatsPayload {
 interface BetPlacement {
   option_idx: number;
   amount: number;
+  payout: number | null;
 }
 
 type WagerStatus = "idle" | "submitting" | "success";
@@ -213,7 +214,7 @@ export default function BetDetailScreen() {
       await placeBet(id, selectedOption, wagerAmount);
       // On success, update the UI to the success state
       setWagerStatus("success");
-      setUserPlacement({ option_idx: selectedOption, amount: wagerAmount });
+      setUserPlacement({ option_idx: selectedOption, amount: wagerAmount, payout: null });
       // After x seconds, automatically close the sheet
       setTimeout(() => {
         handleCloseSheet();
@@ -304,7 +305,9 @@ export default function BetDetailScreen() {
             {isSettled && hasUserBet && (
               <View style={[styles.resultBanner, didUserWin ? styles.resultBannerWin : styles.resultBannerLoss]}>
                 <Feather name={didUserWin ? "award" : "x-octagon"} size={20} color="#fff" />
-                <Text style={styles.resultBannerText}>{didUserWin ? `You Won! Payout: XX Coins` : "You Lost"}</Text>
+                <Text style={styles.resultBannerText}>
+                  {didUserWin ? `You Won! 🎉🎉 Payout: ${userPlacement.payout || 0} Coins` : "You Lost 😭"}
+                </Text>
               </View>
             )}
             <View style={styles.optionsGrid}>
@@ -652,6 +655,6 @@ const styles = StyleSheet.create({
   resultBannerText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
   optionLocked: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
   optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309' },
-  optionLoser: { backgroundColor: '#EF4444', borderColor: '#B40909' },
+  optionLoser: { backgroundColor: '#EF4444', borderColor: '#B91C1C' },
   winnerIcon: { position: 'absolute', top: 8, right: 8 },
 });
