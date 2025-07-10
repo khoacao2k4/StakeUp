@@ -81,7 +81,7 @@ router.get('/me/history', verifyToken, async (req, res) => {
   const userId = res.locals.user.sub;
   const { data, error } = await supabase
     .from('bet_placements')
-    .select("amount, payout, option_idx, bets ( title, options, status )")
+    .select("amount, payout, option_idx, bets ( id, title, options, status )")
     .eq("user_id", userId)
     .order('created_at', { ascending: false })
 
@@ -92,11 +92,13 @@ router.get('/me/history', verifyToken, async (req, res) => {
 
   const result = data.map((betInfo: any) => {
     return {
+      id: betInfo.bets.id,
+      title: betInfo.bets.title,
       status: betInfo.bets.status,
       amount: betInfo.amount,
-      payout: betInfo.payout,
       option: betInfo.bets.options[betInfo.option_idx],
-      title: betInfo.bets.title,
+      payout: betInfo.payout,
+      
     }
   })
   res.json(result);
