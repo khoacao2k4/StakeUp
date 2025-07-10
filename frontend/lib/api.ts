@@ -29,6 +29,18 @@ export async function updateProfile(profile: any) {
   return response.data;
 }
 
+export async function getUserBetsHistory() {
+  const token = await getToken();
+  if (!token) throw new Error("No token found");
+  const response = await axios.get(`${API_BASE_URL}/user/me/history`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
+  return response.data;
+}
+
 interface BetInfo { 
   title: string; 
   description: string; 

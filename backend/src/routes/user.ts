@@ -77,5 +77,30 @@ router.patch('/me', verifyToken, upload.single('avatar'), async (req, res) => {
   res.json(profileData);
 });
 
+router.get('/me/history', verifyToken, async (req, res) => {
+  const userId = res.locals.user.sub;
+  const { data, error } = await supabase
+    .from('bet_placements')
+    .select("amount, payout, option_idx, bets ( title, options, status )")
+    .eq("user_id", userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+
+  const result = data.map((betInfo: any) => {
+    return {
+      status: betInfo.bets.status,
+      amount: betInfo.amount,
+      payout: betInfo.payout,
+      option: betInfo.bets.options[betInfo.option_idx],
+      title: betInfo.bets.title,
+    }
+  })
+  res.json(result);
+})
+
 
 export default router
