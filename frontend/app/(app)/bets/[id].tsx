@@ -44,7 +44,7 @@ export default function BetDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>(); //bet id from url
   const [bet, setBet] = useState<Bet | null>(null); // bet details
   const [loading, setLoading] = useState(true); // loading state
-  const [timeLeft, setTimeLeft] = useState("");
+  const [timeLeft, setTimeLeft] = useState(""); // time left to close the bet
   // USER DETAIL
   const { profile, setProfile } = useProfileStore();
   const [userPlacement, setUserPlacement] = useState<BetPlacement | null>(null);
@@ -63,8 +63,9 @@ export default function BetDetailScreen() {
   // BET SETTLEMENT
   const [isSettleModalVisible, setIsSettleModalVisible] = useState(false);
   const isSettled = bet?.status === 'settled';
-  const canSettle = isHost && isBetClosed && !isSettled;
-  const isLocked = isBetClosed || hasUserBet || isSettled || hasEmptyBalance;
+  const isCancelled = bet?.status === 'cancelled';
+  const canSettle = isHost && isBetClosed && bet?.status === "open";
+  const isLocked = isBetClosed || hasUserBet || isSettled || hasEmptyBalance || isCancelled;
   const didUserWin = hasUserBet && userPlacement.option_idx === bet?.settled_option;
 
   const [sheetAnimation] = useState(
@@ -105,37 +106,44 @@ export default function BetDetailScreen() {
           ([betDetails, placement]) => {
             setBet(betDetails);
             setUserPlacement(placement);
-            calculateAndSetTimeLeft(betDetails.closed_at);
+            if (betDetails.status !== "cancelled") calculateAndSetTimeLeft(betDetails.closed_at);
           }
         );
-        await fetchBetStats();
+
+        if (bet?.status !== "cancelled") {
+          console.log("Fetching bet stats...");
+          await fetchBetStats();
+        }
+        
         // Subscribe to realtime updates for the bet from host
-        betChannel = supabase
-          .channel(`bet_changes_${id}`)
-          .on<Bet>(
-            "postgres_changes",
-            {
-              event: "UPDATE",
-              schema: "public",
-              table: "bets",
-              filter: `id=eq.${id}`,
-            },
-            (payload) => {
-              console.log("Bet updated from database:", payload.new);
-              setBet((current) => ({ ...current, ...payload.new }));
-              if (payload.new.closed_at) {
-                calculateAndSetTimeLeft(payload.new.closed_at);
+        if (bet?.status === "open") {
+          betChannel = supabase
+            .channel(`bet_changes_${id}`)
+            .on<Bet>(
+              "postgres_changes",
+              {
+                event: "UPDATE",
+                schema: "public",
+                table: "bets",
+                filter: `id=eq.${id}`,
+              },
+              (payload) => {
+                console.log("Bet updated from database:", payload.new);
+                setBet((current) => ({ ...current, ...payload.new }));
+                if (payload.new.closed_at) {
+                  calculateAndSetTimeLeft(payload.new.closed_at);
+                }
               }
-            }
-          )
-          .subscribe();
-        // Subscribe to updates from bet stats (1-min interval)
-        statsChannel = supabase
-          .channel(`stats_changes_${id}`)
-          .on("broadcast", { event: "stats_updated" }, () => {
-            fetchBetStats();
-          })
-          .subscribe();
+            )
+            .subscribe();
+          // Subscribe to updates from bet stats (1-min interval)
+          statsChannel = supabase
+            .channel(`stats_changes_${id}`)
+            .on("broadcast", { event: "stats_updated" }, () => {
+              fetchBetStats();
+            })
+            .subscribe();
+        }
         //console.log("Page setup complete.");
       } catch (error) {
         console.error("Error setting up page:", error);
@@ -176,7 +184,7 @@ export default function BetDetailScreen() {
 
   useEffect(() => {
     // Don't start the timer if there's no bet or close date
-    if (!bet?.closed_at) return;
+    if (!bet?.closed_at || bet.status === "cancelled") return;
 
     const timer = setInterval(() => {
       // The function will calculate the time and tell us if it should stop
@@ -281,7 +289,7 @@ export default function BetDetailScreen() {
               </View>
               <View style={styles.statItem}>
                 <Feather name="clock" size={16} color="#059669" />
-                <Text style={styles.statText}>{timeLeft}</Text>
+                <Text style={styles.statText}>{isCancelled ? 'CANCELLED' : timeLeft}</Text>
               </View>
             </View>
 
@@ -295,12 +303,20 @@ export default function BetDetailScreen() {
 
             {/* Conditional title based on coin balance */}
             <Text style={styles.optionsTitle}>
-              {isSettled ? "Final Result" : 
+              {isCancelled ? "Bet Cancelled" :
+              isSettled ? "Final Result" : 
               isBetClosed ? "Betting has closed" : 
               hasUserBet ? "Your chosen option" : 
               hasEmptyBalance ? "You have no coins 😔" :
               "Choose an Option"}
             </Text>
+
+            {isCancelled && (
+              <View style={[styles.resultBanner, styles.resultBannerCancelled]}>
+                <Feather name="slash" size={20} color="#fff" />
+                <Text style={styles.resultBannerText}>This bet was cancelled by the host.</Text>
+              </View>
+            )}
 
             {isSettled && hasUserBet && (
               <View style={[styles.resultBanner, didUserWin ? styles.resultBannerWin : styles.resultBannerLoss]}>
@@ -342,13 +358,15 @@ export default function BetDetailScreen() {
       </TouchableWithoutFeedback>
 
       {/* --- OVERLAYS --- */}
+      {/* Back Button */}
       <TouchableOpacity
         onPress={() => router.back()}
         style={[styles.navigateButton, { left: 20 }]}
       >
         <Feather name="arrow-left" size={24} color="#FFFFFF" />
       </TouchableOpacity>
-      {isHost && (
+      {/* Edit Bet Button (HOST ONLY) */}
+      {isHost && bet.status === "open" && (
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -361,7 +379,7 @@ export default function BetDetailScreen() {
           <Feather name="edit-2" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       )}
-
+      {/* Wager Sheet Overlay */}
       {selectedOption !== null && bet.options && (
         <Animated.View style={[styles.wagerSheet, { transform: [{ translateY: sheetAnimation }] }]}>
           {/* Conditionally render UI based on wagerStatus */}
@@ -652,6 +670,7 @@ const styles = StyleSheet.create({
   resultBanner: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 16 },
   resultBannerWin: { backgroundColor: '#10B981' },
   resultBannerLoss: { backgroundColor: '#EF4444' },
+  resultBannerCancelled: { backgroundColor: '#6B7280' },
   resultBannerText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
   optionLocked: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
   optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309' },

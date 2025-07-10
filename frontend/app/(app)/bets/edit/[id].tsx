@@ -33,6 +33,8 @@ export default function EditBetScreen() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const [isEditable, setIsEditable] = useState(false);
+
   // Fetch bet details
   useEffect(() => {
     if (!id) return;
@@ -46,6 +48,7 @@ export default function EditBetScreen() {
         if (data.closed_at) {
           setEndDate(new Date(data.closed_at));
         }
+        setIsEditable(data.status === "open");
       })
       .catch((err) => {
         Alert.alert("Error", "Could not load bet details.");
@@ -105,6 +108,20 @@ export default function EditBetScreen() {
 
   if (loading) {
     return <BetDetailSkeleton />;
+  }
+
+  if (!isEditable) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>This bet is not editable.</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Feather name="arrow-left" size={24} color="#064E3B" />
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
   }
 
   return (
