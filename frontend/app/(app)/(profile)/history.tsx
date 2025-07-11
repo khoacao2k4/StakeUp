@@ -10,9 +10,9 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome5, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { getUserBetsHistory } from '@/lib/api';
+import { getUserBetsHistory } from '@/lib/api'; // Assuming this function exists and works
 
 // --- Interfaces ---
 interface BetHistoryItem {
@@ -21,13 +21,14 @@ interface BetHistoryItem {
   status: 'open' | 'settled' | 'cancelled';
   amount: number;
   option: string;
-  payout: number;
+  payout: number | null; // Payout can be null for active/cancelled bets
 }
 
 // --- Bet History Card Component ---
 const BetHistoryCard = ({ item }: { item: BetHistoryItem }) => {
-  const isWin = item.status === 'settled' && item.payout > 0;
-  const isLoss = item.status === 'settled' && item.payout === null;
+  // Corrected logic for determining win/loss state
+  const isWin = item.status === 'settled' && item.payout !== null && item.payout > 0;
+  const isLoss = item.status === 'settled' && (item.payout === null || item.payout <= 0);
   const isActive = item.status === 'open';
 
   const getStatusStyle = () => {
@@ -37,9 +38,16 @@ const BetHistoryCard = ({ item }: { item: BetHistoryItem }) => {
     return styles.statusCancelled; // for 'cancelled' status
   };
 
+  const StatusIcon = ({size = 14, color = '#FFFFFF'}: {size?: number; color?: string}) => {
+    if (isWin) return <FontAwesome5 name="trophy" size={size} color={color}  />
+    if (isLoss) return <Feather name="x-circle" size={size} color={color} />
+    if (isActive) return <FontAwesome6 name="hourglass-half" size={size} color={color} />;
+    return <MaterialCommunityIcons name="cash-refund" size={size} color={color} />
+  };
+
   const getStatusText = () => {
-    if (isWin) return `Won +${item.payout} Coins`;
-    if (isLoss) return `Lost ${item.amount} Coins`;
+    if (isWin) return `+${Math.round(item.payout || 0)}`;
+    if (isLoss) return `-${item.amount}`;
     if (isActive) return 'Active';
     return 'Refunded';
   };
@@ -48,10 +56,11 @@ const BetHistoryCard = ({ item }: { item: BetHistoryItem }) => {
     <TouchableOpacity style={styles.card} onPress={() => router.push(`/(app)/bets/${item.id}`)}>
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.cardSubtitle}>Your pick: {item.option}</Text>
-        <Text style={styles.cardWager}>You wagered: {item.amount} Coins</Text>
+        <Text style={styles.cardSubtitle}>Pick: {item.option}</Text>
+        <Text style={styles.cardWager}>Wagered: {item.amount} Coins</Text>
       </View>
       <View style={[styles.statusBadge, getStatusStyle()]}>
+        <StatusIcon />
         <Text style={styles.statusText}>{getStatusText()}</Text>
       </View>
     </TouchableOpacity>
@@ -94,8 +103,14 @@ export default function HistoryScreen() {
         data={betHistory}
         renderItem={({ item }) => <BetHistoryCard item={item} />}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>You haven't placed any bets yet.</Text>}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20 }}
+        ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+                <Feather name="archive" size={48} color="#A7F3D0" />
+                <Text style={styles.emptyText}>You haven't placed any bets yet.</Text>
+                <Text style={styles.emptySubtitle}>Your past bets will appear here.</Text>
+            </View>
+        }
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 50 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />}
       />
     );
@@ -115,23 +130,36 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1, backgroundColor: "#F0FDF4" },
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderBottomColor: "#D1FAE5",
+    backgroundColor: "#F0FDF4",
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   backButton: { position: 'absolute', left: 20 },
-  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#1F2937" },
+  headerTitle: { fontSize: 22, fontWeight: "bold", color: "#064E3B" },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
   emptyText: {
     textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#6B7280',
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  emptySubtitle: {
+    textAlign: 'center',
+    marginTop: 4,
+    fontSize: 14,
+    color: '#059669',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -171,7 +199,10 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 99, // Pill shape
+    borderRadius: 99,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   statusText: {
     color: '#FFFFFF',

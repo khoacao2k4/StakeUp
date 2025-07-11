@@ -222,7 +222,7 @@ router.post("/:bet_id/settle", verifyToken, async (req, res) => {
   // check if user is the creator of the bet
   const { data: betData, error: betError } = await supabase
     .from('bets')
-    .select('1')
+    .select('creator_id')
     .eq('id', bet_id)
     .eq('creator_id', userId)
     .maybeSingle();
