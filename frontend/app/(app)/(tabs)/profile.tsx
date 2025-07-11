@@ -49,8 +49,8 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const ProfileButton = ({ icon, text, hasNav = false }: { icon: any; text: string; hasNav?: boolean }) => (
-    <TouchableOpacity style={[styles.row]} activeOpacity={hasNav ? 0.5 : 1}>
+  const ProfileButton = ({ icon, text, hasNav = false, onPress }: { icon: any; text: string; hasNav?: boolean; onPress?: () => void }) => (
+    <TouchableOpacity style={[styles.row]} activeOpacity={hasNav ? 0.5 : 1} onPress={onPress}>
       <Feather name={icon} size={20} color="#064E3B" />
       <Text style={styles.rowText}>{text}</Text>
       <View style={{ flex: 1 }} />
@@ -110,7 +110,7 @@ export default function ProfileScreen() {
           ) : (
             <>
               <ProfileButton icon="dollar-sign" text={`Coin Balance: ${profile?.coin_balance}`} />
-              <ProfileButton icon="award" text="Achievements" hasNav />
+              <ProfileButton icon="clock" text="Bets History" hasNav onPress={() => router.push("/history")} />
               <ProfileButton icon="settings" text="Settings" hasNav />
             </>
           )}

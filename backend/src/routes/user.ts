@@ -96,7 +96,7 @@ router.get('/me/history', verifyToken, async (req, res) => {
       title: betInfo.bets.title,
       status: betInfo.bets.status,
       amount: betInfo.amount,
-      option: betInfo.bets.options[betInfo.option_idx],
+      option: betInfo.bets.options[betInfo.option_idx].text,
       payout: betInfo.payout,
       
     }
