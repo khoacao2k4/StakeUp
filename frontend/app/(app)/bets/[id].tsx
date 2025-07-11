@@ -72,6 +72,14 @@ export default function BetDetailScreen() {
     new Animated.Value(Dimensions.get("window").height)
   );
 
+  const getOptionIcon = (isWinningOption: boolean, isSelected: boolean) => {
+    if (isSettled && isWinningOption) 
+      return <Feather name="check-circle" size={16} color="#fff" style={styles.optionIcon} />
+    if (isSettled && !isWinningOption && isSelected)
+      return <Feather name="x-circle" size={18} color="#fff" style={styles.optionIcon} />
+    return null;
+  };
+
   // ================================================= FUNCTIONS =================================================
   // Handles initial data fetching and all realtime subscriptions
   useEffect(() => {
@@ -335,7 +343,7 @@ export default function BetDetailScreen() {
                     key={index}
                     style={({ pressed }) => [
                       styles.optionButton,
-                      isLocked && !isSelected && styles.optionLocked,
+                      isLocked && styles.optionLocked,
                       !isSettled && isSelected && styles.optionSelected,
                       isSettled && isWinningOption && styles.optionWinner,
                       isSettled && !isWinningOption && isSelected && styles.optionLoser,
@@ -346,7 +354,7 @@ export default function BetDetailScreen() {
                       handleSelectOption(index);
                     }}
                   >
-                    {isSettled && isWinningOption && <Feather name="check-circle" size={16} color="#fff" style={styles.winnerIcon} />}
+                    {getOptionIcon(isWinningOption, isSelected)}
                     <Text style={[styles.optionText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>{option.text}</Text>
                     <Text style={[styles.oddsText, (isSelected || (isSettled && isWinningOption)) && styles.optionTextSelected]}>Odds: {bet.odds ? bet.odds[index].toFixed(2) : "1.00"}</Text>
                   </Pressable>
@@ -537,7 +545,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     justifyContent: "center",
   },
-  optionSelected: { backgroundColor: "#10B981", borderColor: "#047857" },
+  optionSelected: { backgroundColor: "#10B981", borderColor: "#047857", opacity: 1 },
   optionDisabled: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB",  opacity: 0.6 },
   optionText: {
     fontSize: 16,
@@ -673,7 +681,7 @@ const styles = StyleSheet.create({
   resultBannerCancelled: { backgroundColor: '#6B7280' },
   resultBannerText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 10 },
   optionLocked: { backgroundColor: "#F3F4F6", borderColor: "#E5E7EB", opacity: 0.6 },
-  optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309' },
-  optionLoser: { backgroundColor: '#EF4444', borderColor: '#B91C1C' },
-  winnerIcon: { position: 'absolute', top: 8, right: 8 },
+  optionWinner: { backgroundColor: '#FBBF24', borderColor: '#B45309', opacity: 1 },
+  optionLoser: { backgroundColor: '#EF4444', borderColor: '#B91C1C', opacity: 1 },
+  optionIcon: { position: 'absolute', top: 8, right: 8 },
 });
