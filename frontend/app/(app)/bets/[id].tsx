@@ -111,47 +111,45 @@ export default function BetDetailScreen() {
       try {
         // Fetch bet details
         await Promise.all([getBetDetails(id), getBetPlacement(id)]).then(
-          ([betDetails, placement]) => {
+          async ([betDetails, placement]) => {
             setBet(betDetails);
             setUserPlacement(placement);
-            if (betDetails.status !== "cancelled") calculateAndSetTimeLeft(betDetails.closed_at);
+            if (betDetails.status !== "cancelled") {
+              calculateAndSetTimeLeft(betDetails.closed_at);
+              await fetchBetStats();
+            }
+            // Subscribe to realtime updates for the bet from host
+            if (betDetails?.status === "open") {
+              console.log("Subscribing to realtime updates...");
+              betChannel = supabase
+                .channel(`bet_changes_${id}`)
+                .on<Bet>(
+                  "postgres_changes",
+                  {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "bets",
+                    filter: `id=eq.${id}`,
+                  },
+                  (payload) => {
+                    console.log("Bet updated from database:", payload.new);
+                    setBet((current) => ({ ...current, ...payload.new }));
+                    if (payload.new.closed_at) {
+                      calculateAndSetTimeLeft(payload.new.closed_at);
+                    }
+                  }
+                )
+                .subscribe();
+              // Subscribe to updates from bet stats (1-min interval)
+              statsChannel = supabase
+                .channel(`stats_changes_${id}`)
+                .on("broadcast", { event: "stats_updated" }, () => {
+                  fetchBetStats();
+                })
+                .subscribe();
+            }
           }
         );
-
-        if (bet?.status !== "cancelled") {
-          console.log("Fetching bet stats...");
-          await fetchBetStats();
-        }
-        
-        // Subscribe to realtime updates for the bet from host
-        if (bet?.status === "open") {
-          betChannel = supabase
-            .channel(`bet_changes_${id}`)
-            .on<Bet>(
-              "postgres_changes",
-              {
-                event: "UPDATE",
-                schema: "public",
-                table: "bets",
-                filter: `id=eq.${id}`,
-              },
-              (payload) => {
-                console.log("Bet updated from database:", payload.new);
-                setBet((current) => ({ ...current, ...payload.new }));
-                if (payload.new.closed_at) {
-                  calculateAndSetTimeLeft(payload.new.closed_at);
-                }
-              }
-            )
-            .subscribe();
-          // Subscribe to updates from bet stats (1-min interval)
-          statsChannel = supabase
-            .channel(`stats_changes_${id}`)
-            .on("broadcast", { event: "stats_updated" }, () => {
-              fetchBetStats();
-            })
-            .subscribe();
-        }
         //console.log("Page setup complete.");
       } catch (error) {
         console.error("Error setting up page:", error);
@@ -165,7 +163,7 @@ export default function BetDetailScreen() {
     return () => {
       if (betChannel) betChannel.unsubscribe();
       if (statsChannel) statsChannel.unsubscribe();
-      //console.log("Cleanup complete.");
+      console.log("Cleanup complete.");
     };
   }, []);
 
@@ -255,6 +253,7 @@ export default function BetDetailScreen() {
     <View style={{ flex: 1 }}>
       <TouchableWithoutFeedback onPress={handleCloseSheet}>
         <View style={styles.container}>
+          {/* Header Image */}
           <View style={styles.imageHeader}>
             <Image
               source={{ uri: `https://picsum.photos/seed/${bet.id}/600/400` }}
@@ -265,6 +264,7 @@ export default function BetDetailScreen() {
               style={StyleSheet.absoluteFill}
             />
           </View>
+          {/* Creator Info*/}
           <View style={styles.creatorInfo}>
             <Image
               source={{
@@ -278,16 +278,18 @@ export default function BetDetailScreen() {
               @{bet.profiles?.username || "anonymous"}
             </Text>
           </View>
+          {/* Content */}
           <ScrollView
             style={styles.content}
             contentContainerStyle={{ paddingBottom: 50 }}
           >
+            {/* Title and Description */}
             <Text style={styles.title}>{bet.title}</Text>
-
             {bet.description && (
               <Text style={styles.description}>{bet.description}</Text>
             )}
 
+            {/* Stats Container*/}
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <Feather name="users" size={16} color="#059669" />
@@ -301,7 +303,7 @@ export default function BetDetailScreen() {
               </View>
             </View>
 
-            {/* Button trigger the settlement modal (HOST ONLY) */}
+            {/* Settle Button for Host */}
             {canSettle && (
               <TouchableOpacity style={styles.settleButton} onPress={() => setIsSettleModalVisible(true)}>
                 <FontAwesome name="gavel" size={24} color="#0bd697" />
@@ -334,6 +336,7 @@ export default function BetDetailScreen() {
                 </Text>
               </View>
             )}
+            
             <View style={styles.optionsGrid}>
               {bet.options?.map((option, index) => {
                 const isSelected = userPlacement?.option_idx === index || selectedOption === index;

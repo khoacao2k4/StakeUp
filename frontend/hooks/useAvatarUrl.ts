@@ -22,6 +22,7 @@ export function useAvatarUrl(profile: Profile | null) {
         if (cached) {
           const { url, expiresAt } = JSON.parse(cached);
           if (Date.now() < expiresAt) {
+            console.log("Using cached avatar URL");
             setAvatarUrl(url);
             return; // use cached version
           }

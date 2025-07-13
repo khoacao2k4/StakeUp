@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather, FontAwesome5, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
+import { AntDesign, Feather, FontAwesome5, FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getUserBetsHistory } from '@/lib/api'; // Assuming this function exists and works
 
@@ -38,16 +38,28 @@ const BetHistoryCard = ({ item }: { item: BetHistoryItem }) => {
     return styles.statusCancelled; // for 'cancelled' status
   };
 
-  const StatusIcon = ({size = 14, color = '#FFFFFF'}: {size?: number; color?: string}) => {
+  const StatusIcon = ({size = 16, color = '#FFFFFF'}: {size?: number; color?: string}) => {
     if (isWin) return <FontAwesome5 name="trophy" size={size} color={color}  />
-    if (isLoss) return <Feather name="x-circle" size={size} color={color} />
+    if (isLoss) return <AntDesign name="closecircleo" size={size + 2} color={color} />
     if (isActive) return <FontAwesome6 name="hourglass-half" size={size} color={color} />;
     return <MaterialCommunityIcons name="cash-refund" size={size} color={color} />
   };
 
+  const formatLargeNumber = (num: number): string => {
+    if (num === null || num === undefined) return '0';
+    if (num < 1000) return num.toString();
+    
+    const suffixes = ["", "K", "M", "B", "T"];
+    const i = Math.floor(Math.log(num) / Math.log(1000));
+    const shortValue = (num / Math.pow(1000, i));
+    
+    // Use toFixed(1) to get one decimal place, then remove trailing '.0' if it exists
+    return parseFloat(shortValue.toFixed(1)).toString() + suffixes[i];
+  };
+
   const getStatusText = () => {
-    if (isWin) return `+${Math.round(item.payout || 0)}`;
-    if (isLoss) return `-${item.amount}`;
+    if (isWin) return `+${formatLargeNumber(item.payout || 0)}`;
+    if (isLoss) return `-${formatLargeNumber(item.amount)}`;
     if (isActive) return 'Active';
     return 'Refunded';
   };
@@ -181,7 +193,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
   },
@@ -206,7 +218,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   statusWin: { backgroundColor: '#10B981' },
