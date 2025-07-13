@@ -93,7 +93,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // @ts-ignore
-    const unsubscribe = navigation.addListener('tabPress', (e) => {
+    const tabPressListener = navigation.addListener('tabPress', (e) => {
       // Check if the home tab is already focused
       if (navigation.isFocused()) {
         // @ts-ignore
@@ -103,7 +103,7 @@ export default function HomeScreen() {
       }
     });
 
-    return unsubscribe;
+    return tabPressListener;
   }, [navigation]);
 
   return (
