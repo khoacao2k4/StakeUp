@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BetCard, BetCardSkeleton } from "@/components/BetCard";
 import { getListBets } from "@/lib/api";
 import { Profile } from "@/app/(app)/(tabs)/profile";
+import { useNavigation } from "expo-router";
 
 export interface Bet {
   id: string;
@@ -30,6 +31,10 @@ export interface Bet {
 const MAX_BETS_PER_PAGE = 10;
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
+  const flatListRef = useRef<FlatList<Bet>>(null);
+
+  // State
   const [bets, setBets] = useState<Bet[]>([]);
   const [intialloading, setIntialLoading] = useState(true); //iniial load
   const [refreshing, setRefreshing] = useState(false); //after refresh 
@@ -81,8 +86,25 @@ export default function HomeScreen() {
     setPage(0);
     setHasMore(true);
     await loadInitialBets();
-    setRefreshing(false);
+    await setTimeout(() => { // cause a delay to show loading briefly
+      setRefreshing(false);
+    }, 500);
   }, []);
+
+  useEffect(() => {
+    // @ts-ignore
+    const unsubscribe = navigation.addListener('tabPress', (e) => {
+      // Check if the home tab is already focused
+      if (navigation.isFocused()) {
+        // @ts-ignore
+        e.preventDefault();
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        onRefresh();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,6 +119,7 @@ export default function HomeScreen() {
         </View>
       ) : (
         <FlatList
+          ref={flatListRef}
           data={bets}
           renderItem={({ item }) => <BetCard bet={item} />}
           keyExtractor={(item) => item.id}

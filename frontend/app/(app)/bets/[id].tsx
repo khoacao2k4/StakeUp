@@ -198,7 +198,7 @@ export default function BetDetailScreen() {
       if (!shouldContinue) clearInterval(timer);
     }, 500);
     return () => clearInterval(timer);
-  }, [bet?.closed_at, calculateAndSetTimeLeft]);
+  }, [bet?.closed_at]);
 
   const handleSelectOption = (index: number) => {
     if (hasEmptyBalance || isLocked) return;
