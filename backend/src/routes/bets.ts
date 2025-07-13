@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 const router = Router();
 const cache = new Map();
 const CACHE_EXPIRATION_TIME = 24 * 60 * 60; // 24 hour
+const MAX_BETS_PER_PAGE = 10;
 
 /** HELPER FUNCTIONS  **/
 export async function getSignedUrls(paths: string[]) {
@@ -77,12 +78,13 @@ router.post("/", verifyToken, async (req, res) => {
 
 
 router.get("/", async (req, res) => {
-  const page = Math.max(1, Number(req.query.page) || 1);
+  console.log("get all bets");
+  const page = Math.max(0, Number(req.query.page) || 0);
   const {data, error} = await supabase
     .from('bets')
     .select("*, profiles ( username, avatar_path )")
     .order("created_at", { ascending: false })
-    .range((page - 1) * 10, page * 10 - 1)
+    .range(page * MAX_BETS_PER_PAGE, (page + 1) * MAX_BETS_PER_PAGE - 1)
   if (error) {
       res.status(500).json({ error: error.message });
       return;

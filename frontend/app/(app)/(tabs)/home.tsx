@@ -4,11 +4,13 @@ import {
   Text,
   View,
   FlatList,
-  RefreshControl
+  RefreshControl,
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BetCard, BetCardSkeleton } from "@/components/BetCard";
-import { getAllBets } from "@/lib/api";
+import { getListBets } from "@/lib/api";
 import { Profile } from "@/app/(app)/(tabs)/profile";
 
 export interface Bet {
@@ -25,26 +27,60 @@ export interface Bet {
   odds?: number[];
 }
 
+const MAX_BETS_PER_PAGE = 10;
+
 export default function HomeScreen() {
   const [bets, setBets] = useState<Bet[]>([]);
-  const [loading, setLoading] = useState(true); //iniial load
+  const [intialloading, setIntialLoading] = useState(true); //iniial load
   const [refreshing, setRefreshing] = useState(false); //after refresh 
 
-  const loadBets = async () => {
-    getAllBets()
-      .then((bets) => setBets(bets))
-      .catch((error) => console.error("Failed to load bets", error));
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadInitialBets = async () => {
+    try {
+      const initialBets = await getListBets(0);
+      setBets(initialBets);
+      setPage(1); // next page
+      setHasMore(initialBets.length === MAX_BETS_PER_PAGE);
+    } catch (error) {
+      Alert.alert("Error", "Failed to load bets. Please try again.");
+    }
   };
+
+  const loadMoreBets = async () => {
+    console.log("check load more");
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextBets = await getListBets(page);
+      if (nextBets.length > 0) {
+        setBets([...bets, ...nextBets]);
+        setPage(page + 1);
+        setHasMore(nextBets.length === MAX_BETS_PER_PAGE);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to load bets. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   // iniial load
   useEffect(() => {
-    loadBets()
-      .finally(() => setLoading(false));
+    loadInitialBets()
+      .finally(() => setIntialLoading(false));
   }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadBets();
+    setPage(0);
+    setHasMore(true);
+    await loadInitialBets();
     setRefreshing(false);
   }, []);
 
@@ -54,7 +90,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Home Feed</Text>
       </View>
-      {loading ? (
+      {intialloading ? (
         <View style={styles.content}>
           <BetCardSkeleton />
           <BetCardSkeleton />
@@ -73,6 +109,12 @@ export default function HomeScreen() {
               tintColor="#10B981"
             />
           }
+          onEndReached={loadMoreBets} // Function to call when end is reached
+          onEndReachedThreshold={0.5} // number of screen lengths you should be from the bottom before it fires the event.
+          ListFooterComponent={() => {
+            if (!loadingMore) return null;
+            return <ActivityIndicator style={{ marginVertical: 20 }} size="large" color="#10B981" />;
+          }}
         />
       )}
     </SafeAreaView>

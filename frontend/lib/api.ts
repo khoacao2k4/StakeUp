@@ -60,7 +60,7 @@ export async function createBet(bet: BetInfo) {
   return response.data;
 }
 
-export async function getAllBets(page: number = 1) {
+export async function getListBets(page: number = 0) {
   const response = await axios.get(`${API_BASE_URL}/bets?page=${page}`);
   if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;

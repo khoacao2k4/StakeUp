@@ -57,8 +57,6 @@ StakeUp is organized as a monorepo with both the client and server in one reposi
 
 [ ] User Bet History
 
-[ ] Transaction Log
-
 [ ] HOMESCREEN: Implement pagination (scroll like Facebook) to efficiently load bets on the home screen.
 
 [ ] HOMESCREEN: Add UI controls to filter and sort the main feed by "Active," "Ending Soon," and "Settled."
