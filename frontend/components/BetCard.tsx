@@ -1,5 +1,5 @@
 import { Bet } from "@/app/(app)/(tabs)/home";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { Image } from "expo-image";
 import { Feather } from "@expo/vector-icons";
@@ -33,16 +33,19 @@ export const BetCardSkeleton = () => (
 export const BetCard = ({ bet }: { bet: Bet }) => {
   const [timeLeft, setTimeLeft] = useState("");
 
-  useEffect(() => {
-    const writeTimeLeft = () => {
+  const writeTimeLeft = useCallback(() => {
+      if (bet.status === "settled") {
+        setTimeLeft("Settled");
+        return false;
+      }
       if (!bet.closed_at) { // If no close date, won't show
         setTimeLeft("No end date");
-        return;
+        return false;
       }
       const difference = timeLeftInfo(new Date(bet.closed_at).getTime());
       if (difference.end) {
         setTimeLeft("Closed");
-        return;
+        return false;
       }
       const { days, hours, minutes } = difference;
       if (days > 0) {
@@ -52,10 +55,15 @@ export const BetCard = ({ bet }: { bet: Bet }) => {
       } else {
         setTimeLeft(`${minutes}m left`);
       }
-    };
+      return true;
+    }, [bet]);
 
+  useEffect(() => {
     writeTimeLeft();
-    const timer = setInterval(writeTimeLeft, 60000); // Update every minute
+    const timer = setInterval(() => {
+      const shouldContinue = writeTimeLeft();
+      if (!shouldContinue) clearInterval(timer);
+    }, 60000); // Update every minute
     return () => clearInterval(timer);
   }, [bet.closed_at]);
 
