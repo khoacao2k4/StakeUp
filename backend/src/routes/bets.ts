@@ -6,6 +6,7 @@ const router = Router();
 const cache = new Map();
 const CACHE_EXPIRATION_TIME = 24 * 60 * 60; // 24 hour
 const MAX_BETS_PER_PAGE = 10;
+type BetFilter = 'newest' | 'settled' | 'ending_soon';
 
 /** HELPER FUNCTIONS  **/
 export async function getSignedUrls(paths: string[]) {
@@ -78,25 +79,43 @@ router.post("/", verifyToken, async (req, res) => {
 
 
 router.get("/", async (req, res) => {
-  console.log("get all bets");
   const page = Math.max(0, Number(req.query.page) || 0);
-  const {data, error} = await supabase
+  const filter = req.query.filter as BetFilter || 'newest';
+
+  let query = supabase
     .from('bets')
-    .select("*, profiles ( username, avatar_path )")
-    .order("created_at", { ascending: false })
-    .range(page * MAX_BETS_PER_PAGE, (page + 1) * MAX_BETS_PER_PAGE - 1)
+    .select("*, profiles ( username, avatar_path ), participant_count:bet_participant_counts ( participants )")
+
+  switch (filter) {
+    case 'newest':
+      query = query
+        .eq("status", "open")
+        .order("created_at", { ascending: false });
+      break;
+    case 'settled':
+      query = query.eq("status", "settled").order("closed_at", { ascending: false });
+      break;
+    case 'ending_soon':
+      query = query
+        .eq("status", "open")
+        .gt("closed_at", new Date().toISOString())
+        .order("closed_at", { ascending: true });
+      break;
+  }
+  // applying pagination
+  const {data, error} = await query.range(page * MAX_BETS_PER_PAGE, (page + 1) * MAX_BETS_PER_PAGE - 1)
   if (error) {
       res.status(500).json({ error: error.message });
       return;
   }
 
-  // Fetch participation counts from the view
-  const betIds = data.map((bet) => bet.id);
-  const participantsData = await getParticipationCounts(betIds);
+  // // Fetch participation counts from the view
+  // const betIds = data.map((bet) => bet.id);
+  // const participantsData = await getParticipationCounts(betIds);
 
-  data.forEach((bet) => {
-    bet.participant_count = participantsData[bet.id] || 0;
-  });
+  // data.forEach((bet) => {
+  //   bet.participant_count = participantsData[bet.id] || 0;
+  // });
 
   // Fetch signed urls
   const paths = data.map((bet) => bet.profiles.avatar_path);
@@ -104,6 +123,7 @@ router.get("/", async (req, res) => {
   const signedUrlsMap = Object.fromEntries(signedUrls);
 
   data.forEach((bet) => {
+    bet.participant_count = bet.participant_count.length != 0 ? bet.participant_count[0].participants : 0;
     delete bet.options;
     delete bet.creator_id;
     delete bet.settled_option;
