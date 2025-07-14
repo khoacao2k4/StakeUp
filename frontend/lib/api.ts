@@ -1,8 +1,9 @@
+import { BetFilter } from "@/app/(app)/(tabs)/home";
 import { getToken } from "./supabase";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://f105c40b84b7.ngrok-free.app";
+  "https://1963a49ab1d0.ngrok-free.app";
 
 export async function getProfile() {
   const token = await getToken();
@@ -60,8 +61,8 @@ export async function createBet(bet: BetInfo) {
   return response.data;
 }
 
-export async function getListBets(page: number = 0) {
-  const response = await axios.get(`${API_BASE_URL}/bets?page=${page}`);
+export async function getListBets(page: number = 0, filter: BetFilter = "newest") {
+  const response = await axios.get(`${API_BASE_URL}/bets?page=${page}&filter=${filter}`);
   if (response.status !== 200 || !response.data) throw new Error(response.data.error);
   return response.data;
 }

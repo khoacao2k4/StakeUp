@@ -6,7 +6,8 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
-  Alert
+  Alert,
+  TouchableOpacity
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BetCard, BetCardSkeleton } from "@/components/BetCard";
@@ -29,6 +30,31 @@ export interface Bet {
 }
 
 const MAX_BETS_PER_PAGE = 10;
+export type BetFilter = 'newest' | 'settled' | 'ending_soon';
+
+const FilterTabs = ({ activeFilter, onFilterChange }: { activeFilter: BetFilter, onFilterChange: (filter: BetFilter) => void }) => {
+  const filters: { label: string; value: BetFilter }[] = [
+    { label: "Newest", value: "newest" },
+    { label: "Ending Soon", value: "ending_soon" },
+    { label: "Settled", value: "settled" },
+  ];
+
+  return (
+    <View style={styles.filterContainer}>
+      {filters.map((filter) => (
+        <TouchableOpacity
+          key={filter.value}
+          style={[styles.filterButton, activeFilter === filter.value && styles.activeFilterButton]}
+          onPress={() => onFilterChange(filter.value)}
+        >
+          <Text style={[styles.filterText, activeFilter === filter.value && styles.activeFilterText]}>
+            {filter.label}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -39,14 +65,17 @@ export default function HomeScreen() {
   const [intialloading, setIntialLoading] = useState(true); //iniial load
   const [refreshing, setRefreshing] = useState(false); //after refresh 
 
+  // Filter
+  const [activeFilter, setActiveFilter] = useState<BetFilter>('newest');
+
   // Pagination
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const loadInitialBets = async () => {
+  const loadInitialBets = async (filter: BetFilter) => {
     try {
-      const initialBets = await getListBets(0);
+      const initialBets = await getListBets(0, filter);
       setBets(initialBets);
       setPage(1); // next page
       setHasMore(initialBets.length === MAX_BETS_PER_PAGE);
@@ -60,7 +89,7 @@ export default function HomeScreen() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const nextBets = await getListBets(page);
+      const nextBets = await getListBets(page, activeFilter);
       if (nextBets.length > 0) {
         setBets([...bets, ...nextBets]);
         setPage(page + 1);
@@ -75,17 +104,24 @@ export default function HomeScreen() {
     }
   }
 
+  const handleFilterChange = (filter: BetFilter) => {
+    setActiveFilter(filter);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    onRefresh(filter);
+  };
+
   // iniial load
   useEffect(() => {
-    loadInitialBets()
+    loadInitialBets(activeFilter)
       .finally(() => setIntialLoading(false));
   }, []);
 
-  const onRefresh = useCallback(async () => {
+  const onRefresh = useCallback(async (filter?: BetFilter) => {
+    console.log("check refresh", filter || activeFilter);
     setRefreshing(true);
     setPage(0);
     setHasMore(true);
-    await loadInitialBets();
+    await loadInitialBets(filter || activeFilter);
     await setTimeout(() => { // cause a delay to show loading briefly
       setRefreshing(false);
     }, 500);
@@ -112,6 +148,13 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Home Feed</Text>
       </View>
+
+      {/* Filter Tabs */}
+      <FilterTabs 
+        activeFilter={activeFilter} 
+        onFilterChange={handleFilterChange}
+      />
+
       {intialloading ? (
         <View style={styles.content}>
           <BetCardSkeleton />
@@ -164,5 +207,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, 
     paddingTop: 16, 
     paddingBottom: 100 
-  }
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#D1FAE5",
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 99,
+    backgroundColor: 'transparent',
+  },
+  activeFilterButton: {
+    backgroundColor: '#10B981',
+  }, 
+  filterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  activeFilterText: {
+    color: '#FFFFFF',
+  },
 });
