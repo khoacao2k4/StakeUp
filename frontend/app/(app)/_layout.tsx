@@ -11,7 +11,7 @@ export default function AppLayout() {
   useEffect(() => {
     getProfile()
       .then((data) => setProfile(data))
-      .catch((err) => console.error("Failed to load profile 2", err));
+      .catch((err) => console.error("Failed to load profile intially", err));
   }, []);
 
   useEffect(() => {

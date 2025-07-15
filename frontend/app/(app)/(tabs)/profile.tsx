@@ -8,6 +8,7 @@ import { getProfile } from "@/lib/api";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { router } from "expo-router";
 import { useAvatarUrl } from "@/hooks/useAvatarUrl";
+import getWinRateColor from "@/utils/getWinRateColor";
 
 export interface Profile {
   id?: number;
@@ -16,6 +17,8 @@ export interface Profile {
   avatar_path?: string;
   avatar_url?: string;
   coin_balance?: number;
+  wins?: number;
+  losses?: number;
 }
 
 export default function ProfileScreen() {
@@ -23,6 +26,18 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const avatarUrl = useAvatarUrl(profile);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const winRateVal = (() => {
+    if (!profile || typeof profile.wins !== 'number' || typeof profile.losses !== 'number') {
+      return null;
+    }
+    const totalSettled = profile.wins + profile.losses;
+    if (totalSettled === 0) {
+      return null; 
+    }
+    return (profile.wins / totalSettled) * 100;
+  })();
+  const winRateDisplay = winRateVal !== null ? `${winRateVal.toFixed(1)}%` : "N/A";
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -54,10 +69,9 @@ export default function ProfileScreen() {
     setProfile(null);
   };
 
-  // TODO: Replace with actual data
-  const StatBox = ({ value, label }: { value: string | number; label: string }) => (
+  const StatBox = ({ value, label, color = '#064E3B' }: { value: string | number; label: string; color?: string }) => (
     <View style={styles.statBox}>
-      <Text style={styles.statValue}>{value}</Text>
+      <Text style={[styles.statValue, { color }]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
@@ -107,9 +121,9 @@ export default function ProfileScreen() {
             </>
           ) : (
             <>
-              <StatBox value={"xx"} label="Bets" />
-              <StatBox value={"xx"} label="Wins" />
-              <StatBox value={"xx"} label="Losses" />
+              <StatBox value={winRateDisplay} label="Win Rate" color={getWinRateColor(winRateVal)}/>
+              <StatBox value={profile?.wins || 0} label="Wins" />
+              <StatBox value={profile?.losses || 0} label="Losses" />
             </>
           )}
         </View>

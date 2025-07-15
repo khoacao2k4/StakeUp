@@ -11,9 +11,9 @@ router.get('/me', verifyToken, async (req, res) => {
   const userId = user.sub
 
   const { data, error } =  await supabase
-    .from('profiles')
-    .select(`id, full_name, username, avatar_path, coin_balance`)
-    .eq('id', userId)
+    .from('user_stats')
+    .select("*")
+    .eq("id", userId)
     .single()
 
   if (error) {
