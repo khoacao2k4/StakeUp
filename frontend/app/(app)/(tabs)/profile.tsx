@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View} from "react-native";
 import { Image } from 'expo-image';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase"; // Make sure this path is correct
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getProfile } from "@/lib/api";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { router } from "expo-router";
@@ -22,14 +22,27 @@ export default function ProfileScreen() {
   const { profile, setProfile } = useProfileStore();
   const [loading, setLoading] = useState(true);
   const avatarUrl = useAvatarUrl(profile);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch the user's profile
-  useEffect(() => {
-    getProfile()
-      .then((data) => setProfile(data))
-      .catch((err) => console.error("Failed to load profile", err))
-      .finally(() => setLoading(false));
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      console.log("Refreshing profile...");
+      const data = await getProfile();
+      setProfile(data);
+    } catch (err) {
+      console.error("Failed to load profile", err);
+      Alert.alert("Error", "Could not refresh profile.");
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
+
+  // Fetch the user's profile on initial load
+  useEffect(() => {
+    setLoading(true);
+    onRefresh().finally(() => setLoading(false));
+  }, [onRefresh]);
 
   // Sign the user out
   const handleSignOut = async () => {
@@ -65,7 +78,9 @@ export default function ProfileScreen() {
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
       {/* content */}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer} 
+        refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#10B981" />}>
         {/* profile section */}
         <View style={styles.profileSection}>
           {loading ? (

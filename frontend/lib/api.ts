@@ -3,7 +3,7 @@ import { getToken } from "./supabase";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://1963a49ab1d0.ngrok-free.app";
+  "https://200fad9d8c1f.ngrok-free.app";
 
 export async function getProfile() {
   const token = await getToken();
