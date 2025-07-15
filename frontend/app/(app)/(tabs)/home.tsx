@@ -194,9 +194,9 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#D1FAE5",
-    backgroundColor: "#F0FDF4",
+    // borderBottomWidth: 1,
+    // borderBottomColor: "#D1FAE5",
+    // backgroundColor: "#F0FDF4",
   },
   headerTitle: { 
     fontSize: 24, 
@@ -210,27 +210,32 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#D1FAE5",
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    marginHorizontal: 20,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#D1FAE5'
   },
   filterButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 99,
-    backgroundColor: 'transparent',
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   activeFilterButton: {
-    backgroundColor: '#10B981',
-  }, 
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
   filterText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#047857',
   },
   activeFilterText: {
-    color: '#FFFFFF',
+    color: '#059669',
   },
 });
