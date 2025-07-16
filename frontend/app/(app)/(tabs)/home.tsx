@@ -117,7 +117,6 @@ export default function HomeScreen() {
   }, []);
 
   const onRefresh = useCallback(async (filter?: BetFilter) => {
-    console.log("check refresh", filter || activeFilter);
     setRefreshing(true);
     setPage(0);
     setHasMore(true);
@@ -125,7 +124,7 @@ export default function HomeScreen() {
     await setTimeout(() => { // cause a delay to show loading briefly
       setRefreshing(false);
     }, 500);
-  }, []);
+  }, [activeFilter]);
 
   useEffect(() => {
     // @ts-ignore
