@@ -29,7 +29,7 @@ export default function AppLayout() {
         (payload) => {
           // When the profile changes in the DB, update the central store
           console.log('Profile updated from database:', payload.new);
-          setProfile(payload.new);
+          setProfile({ ...profile, ...payload.new }); // update fields from payload, keep the unchanged ones
         }
       )
       .subscribe();
