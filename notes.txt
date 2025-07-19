@@ -1,0 +1,7 @@
+The documentation for this use case is not good at all, and took me a while to figure it out, but if you want to distribute your app for testing with Expo Go, you can simply use eas update, for example: eas update --branch preview --message 'my new version'
+
+This command will build the JS bundle locally and it will host it at Expo's servers. You can find the link / QR code under "Updates" by logging into https://expo.dev with your Expo account.
+
+It's not required to use eas build before eas update.
+
+https://github.com/expo/eas-cli/issues/997
