@@ -9,6 +9,7 @@ export function useAvatarUrl(profile: Profile | null) {
   useEffect(() => {
     // No avatar -> no URL
     if (!profile?.avatar_path) {
+      console.log("No avatar path");
       setAvatarUrl(null);
       return;
     }

@@ -20,7 +20,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider";
 import BetDetailSkeleton from "@/components/BetDetailSkeleton";
 import { Bet } from "@/app/(app)/(tabs)/home";
-import { getBetDetails, getBetPlacement, placeBet } from "@/lib/api";
+import { getBetDetails, getUserBetPlacement, placeBet } from "@/lib/api";
 import timeLeftInfo from "@/utils/calculateTimeLeft";
 import { useProfileStore } from "@/stores/useProfileStore";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -110,7 +110,7 @@ export default function BetDetailScreen() {
       setLoading(true);
       try {
         // Fetch bet details
-        await Promise.all([getBetDetails(id), getBetPlacement(id)]).then(
+        await Promise.all([getBetDetails(id), getUserBetPlacement(id)]).then(
           async ([betDetails, placement]) => {
             setBet(betDetails);
             setUserPlacement(placement);

@@ -2,44 +2,58 @@ import { BetFilter } from "@/app/(app)/(tabs)/home";
 import { getToken } from "./supabase";
 import axios from "axios";
 
-const API_BASE_URL =
-  "https://stake-up-api.onrender.com/";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
+if (!API_BASE_URL) throw new Error("API_BASE_URL is not defined");
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
+
+// Request Interceptor: Automatically attaches the auth token to every request.
+api.interceptors.request.use(
+  async (config) => {
+    const token = await getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor: Catches all API errors and standardizes the error message.
+api.interceptors.response.use(
+  (response) => {
+    // If the request was successful, just return the response
+    return response;
+  },
+  (error) => {
+    // If the server sends a specific error message, use it.
+    // Otherwise, fall back to a generic message.
+    const errorMessage = error.response?.data?.error || 'An unexpected error occurred.';
+    // Reject the promise with a clean error message
+    return Promise.reject(new Error(errorMessage));
+  }
+);
 
 export async function getProfile() {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-
-  const response = await axios.get(`${API_BASE_URL}/user/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
-  return response.data;
+  const { data } = await api.get('/user/me');
+  return data;
 }
 
-export async function updateProfile(profile: any) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.patch(`${API_BASE_URL}/user/me`, profile, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+export async function updateProfile(profileData: FormData) {
+  const { data } = await api.patch('/user/me', profileData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-  if (response.status !== 200 || !response.data) throw new Error("Failed to update profile");
-  return response.data;
+  return data;
 }
 
 export async function getUserBetsHistory() {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.get(`${API_BASE_URL}/user/me/history`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
-  return response.data;
+  const { data } = await api.get('/user/me/history');
+  return data;
 }
 
 interface BetInfo { 
@@ -50,90 +64,43 @@ interface BetInfo {
 }
 
 export async function createBet(bet: BetInfo) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.post(`${API_BASE_URL}/bets`, bet, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 201 || !response.data) throw new Error(response.data.error);
-  return response.data;
+  const { data } = await api.post('/bets', bet);
+  return data;
 }
 
 export async function getListBets(page: number = 0, filter: BetFilter = "newest") {
-  const response = await axios.get(`${API_BASE_URL}/bets?page=${page}&filter=${filter}`);
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
-  return response.data;
+  const { data } = await api.get(`/bets?page=${page}&filter=${filter}`);
+  return data;
 }
 
 export async function getBetDetails(bet_id: string) {
-  const response = await axios.get(`${API_BASE_URL}/bets/${bet_id}`);
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
-  return response.data;
+  const { data } = await api.get(`/bets/${bet_id}`);
+  return data;
 }
 
-export async function updateBet(bet_id: string, bet_info: BetInfo) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.patch(`${API_BASE_URL}/bets/${bet_id}`, bet_info, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 200 || !response.data) throw new Error(response.data.error);
-  return response.data;
+export async function updateBet(bet_id: string, bet_info: Partial<BetInfo>) {
+  const { data } = await api.patch(`/bets/${bet_id}`, bet_info);
+  return data;
 }
 
 export async function placeBet(bet_id: string, option_idx: number, amount: number) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
   const payload = { option_idx, amount };
-  const response = await axios.post(`${API_BASE_URL}/bets/${bet_id}/placement`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 201 || !response.data) {
-    throw new Error(response.data.error);
-  }
-  return response.data;
+  const { data } = await api.post(`/bets/${bet_id}/placement`, payload);
+  return data;
 }
 
-export async function getBetPlacement(bet_id: string) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.get(`${API_BASE_URL}/bets/${bet_id}/placement`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 200) throw new Error(response.data.error);
-  return response.data;
+export async function getUserBetPlacement(bet_id: string) {
+  const { data } = await api.get(`/bets/${bet_id}/placement`);
+  return data;
 }
 
-export async function settleBet(bet_id: string, option_idx: number) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-
-  const payload = { option_idx };
-  const response = await axios.post(`${API_BASE_URL}/bets/${bet_id}/settle`, payload, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (response.status !== 200) throw new Error(response.data.error);
-  return response.data;
+export async function settleBet(bet_id: string, winning_option_idx: number) {
+  const payload = { winning_option_idx };
+  const { data } = await api.post(`/bets/${bet_id}/settle`, payload);
+  return data;
 }
 
 export async function cancelBet(bet_id: string) {
-  const token = await getToken();
-  if (!token) throw new Error("No token found");
-  const response = await axios.post(`${API_BASE_URL}/bets/${bet_id}/cancel`, {}, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (response.status !== 200) throw new Error(response.data.error);
+  const { data } = await api.post(`/bets/${bet_id}/cancel`);
+  return data;
 }
