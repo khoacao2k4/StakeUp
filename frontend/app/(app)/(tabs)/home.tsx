@@ -81,6 +81,7 @@ export default function HomeScreen() {
       setHasMore(initialBets.length === MAX_BETS_PER_PAGE);
     } catch (error) {
       Alert.alert("Error", "Failed to load bets. Please try again.");
+      setHasMore(false);
     }
   };
 
@@ -99,6 +100,7 @@ export default function HomeScreen() {
       }
     } catch (error) {
       Alert.alert("Error", "Failed to load bets. Please try again.");
+      setHasMore(false);
     } finally {
       setLoadingMore(false);
     }

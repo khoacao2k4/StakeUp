@@ -3,7 +3,7 @@ import { getToken } from "./supabase";
 import axios from "axios";
 
 const API_BASE_URL =
-  "https://c626e33bec7c.ngrok-free.app";
+  "https://stake-up-api.onrender.com/";
 
 export async function getProfile() {
   const token = await getToken();

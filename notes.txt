@@ -1,3 +1,5 @@
+FRONTEND
+
 The documentation for this use case is not good at all, and took me a while to figure it out, but if you want to distribute your app for testing with Expo Go, you can simply use eas update, for example: eas update --branch preview --message 'my new version'
 
 This command will build the JS bundle locally and it will host it at Expo's servers. You can find the link / QR code under "Updates" by logging into https://expo.dev with your Expo account.
@@ -5,3 +7,11 @@ This command will build the JS bundle locally and it will host it at Expo's serv
 It's not required to use eas build before eas update.
 
 https://github.com/expo/eas-cli/issues/997
+
+---------------------------------------------
+
+BACKEND
+
+Render's web server acts as a reverse proxy. It handles all the incoming public traffic on the standard web ports (80 for HTTP, 443 for HTTPS) and then securely forwards those requests to the private port 10000 inside your running Docker container, where your Express app is listening.
+
+That's the standard model for modern web hosting, and you've got the concept down perfectly.
