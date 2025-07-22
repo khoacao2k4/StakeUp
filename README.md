@@ -53,26 +53,6 @@ StakeUp is organized as a monorepo with both the client and server in one reposi
 
 ---
 
-## Upcoming features
-
-- [x] User Bet History
-
-- [x] HOMESCREEN: Implement pagination (scroll like Facebook) to efficiently load bets on the home screen.
-
-- [x] HOMESCREEN: Add UI controls to filter and sort the main feed by "Newest," "Ending Soon," and "Settled."
-
-- [ ] Integrate Expo Push Notifications
-
-- [ ] Private Bets: Allow users to create invite-only bets for specific groups of friends.
-
-- [ ] Achievements & Badges: Reward users with badges for milestones (e.g., "First Win," "High Roller," "Prophet").
-
-- [ ] End-to-End Testing: Implement a comprehensive testing suite with Detox.
-
-- [ ] CI/CD Pipeline: Automate testing and deployment processes using GitHub Actions.
-
----
-
 ## Getting Started
 
 To get a local copy up and running, follow these simple steps.
