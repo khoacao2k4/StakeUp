@@ -19,7 +19,7 @@ app.use('/user', userRoutes)
 app.use('/bets', betRoutes)
 
 app.get('/', (_req, res) => {
-  res.send('Welcome to the Betmate backend 🎲💰')
+  res.send('Backend listening on port' + port)
 })
 
 // 404 handler
