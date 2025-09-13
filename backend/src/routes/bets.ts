@@ -237,7 +237,7 @@ router.post("/:bet_id/placement", verifyToken, async (req, res) => {
 })
 
 router.post("/:bet_id/settle", verifyToken, async (req, res) => {
-  const { option_idx } = req.body;
+  const { winning_option_idx } = req.body;
   const bet_id = req.params.bet_id;
   const userId = res.locals.user.sub;
 
@@ -262,7 +262,7 @@ router.post("/:bet_id/settle", verifyToken, async (req, res) => {
   // call supabase RPC
   const { data, error } = await supabase.rpc('settle_bet', {
     p_bet_id: bet_id,
-    p_winning_option_idx: option_idx,
+    p_winning_option_idx: winning_option_idx,
   });
 
   if (error) {
